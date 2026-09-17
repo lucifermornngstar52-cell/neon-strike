@@ -748,7 +748,15 @@ function updateEnemies(dt){
       else if(e.cd<=0){e.cd=1.0;e.punchT=0.6;setAnim(e,'Punch',0.06);damagePlayer(e.t.dmg);}
     }
     var pushed=pushOutOfCover(o.position.x,o.position.z,r);
-    o.position.x=pushed[0];o.position.z=pushed[1];
+    if(pushed[0]!==o.position.x||pushed[1]!==o.position.z){
+      tB.set(-tA.z,0,tA.x);
+      var side=(e.ph<3.14)?1:-1;
+      o.position.x=pushed[0]+tB.x*side*dt*e.speed;
+      o.position.z=pushed[1]+tB.z*side*dt*e.speed;
+      moved=true;
+    }else{
+      o.position.x=pushed[0];o.position.z=pushed[1];
+    }
     o.position.y=Math.sin(timeNow*2.2+e.ph)*0.03;
     for(var j2=0;j2<enemies.length;j2++){
       if(j2===i2||enemies[j2].dead)continue;
