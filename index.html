@@ -2,11 +2,11 @@
 <html lang="ru">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>NEON STRIKE — 3D FPS</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Courier New',monospace;color:#cceeff}
+html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Courier New',monospace;color:#cceeff;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
 #cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#00ffcc;text-shadow:0 0 6px #00ffcc88;z-index:6;pointer-events:none}
 #hitmark{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:22px;color:#ff3366;opacity:0;z-index:6;pointer-events:none;font-weight:bold}
@@ -24,7 +24,18 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:
 .btn:hover{background:#00ffff;color:#002222;box-shadow:0 0 24px #00ffff88}
 #pauseOv{display:none}
 #overOv{display:none}
-.note{color:#ff6666;font-size:13px;margin-top:10px}
+.note{color:#ffaa44;font-size:13px;margin-top:10px;max-width:340px}
+@media (max-width:600px){.ov h1{font-size:32px;letter-spacing:4px}.ov p{font-size:13px}.btn{padding:12px 34px;font-size:17px}}
+/* ── тач-управление ── */
+#touchUI{display:none;position:fixed;inset:0;z-index:8;pointer-events:none}
+#touchUI.on{display:block}
+#stick{position:absolute;left:24px;bottom:110px;width:132px;height:132px;border:2px solid #00ffcc55;border-radius:50%;background:rgba(0,255,204,0.06);pointer-events:auto;touch-action:none}
+#stickKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(0,255,204,0.25);border:1px solid #00ffcc99}
+.tbtn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;font-size:13px;letter-spacing:1px;border:2px solid #00ffff77;background:rgba(0,255,255,0.08);color:#00ffff}
+#btnFire{right:26px;bottom:104px;width:92px;height:92px;font-size:15px;border-color:#ff336699;background:rgba(255,51,102,0.12);color:#ff5577}
+#btnJump{right:134px;bottom:170px;width:60px;height:60px}
+#btnReload{right:52px;bottom:212px;width:60px;height:60px}
+#btnPause{right:16px;top:12px;width:42px;height:42px;border-radius:10px}
 </style>
 </head>
 <body>
@@ -38,13 +49,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:
 <div id="vign"></div>
 <div id="banner"></div>
 
+<div id="touchUI">
+<div id="stick"><div id="stickKnob"></div></div>
+<div id="btnFire" class="tbtn">ОГОНЬ</div>
+<div id="btnJump" class="tbtn">▲</div>
+<div id="btnReload" class="tbtn">⟳</div>
+<div id="btnPause" class="tbtn">II</div>
+</div>
+
 <div class="ov" id="menu">
 <h1>NEON STRIKE</h1>
 <p>3D FPS · бесконечные волны роботов</p>
+<div id="kbHelp">
 <p>ЛКМ — стрелять · WASD — движение · SHIFT — спринт · SPACE — прыжок</p>
 <p>R — перезарядка · ESC — пауза · хедшот = двойной урон</p>
+</div>
 <button class="btn" id="playBtn">ИГРАТЬ</button>
-<p class="note" id="mobileNote" style="display:none">Нужны клавиатура и мышь — с телефона не поиграть</p>
+<p class="note" id="mobileNote" style="display:none"></p>
 </div>
 
 <div class="ov" id="pauseOv">
@@ -67,6 +88,8 @@ var menu=$('menu'),pauseOv=$('pauseOv'),overOv=$('overOv');
 var scoreEl=$('score'),waveEl=$('wave'),leftEl=$('left'),hpTxt=$('hptxt'),hpFill=$('hpfill'),ammoEl=$('ammo');
 var banner=$('banner'),vign=$('vign'),hitmark=$('hitmark');
 
+var isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints|0)>0;
+
 var scene,camera,renderer,clock,gun,muzzle;
 var state='menu';
 var yaw=0,pitch=0,vy=0,recoil=0,bobT=0;
@@ -78,8 +101,6 @@ var enemies=[],targets=[],particles=[],tracers=[];
 var keys={};
 var lastDt=0;
 
-if(window.matchMedia&&!window.matchMedia('(pointer:fine)').matches){$('mobileNote').style.display='block';}
-
 scene=new THREE.Scene();
 scene.fog=new THREE.Fog(0x050510,8,95);
 camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,300);
@@ -87,7 +108,7 @@ camera.rotation.order='YXZ';
 camera.position.set(0,1.7,0);
 renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,2));
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobile?1.5:2));
 renderer.setClearColor(0x050510);
 document.body.appendChild(renderer.domElement);
 
@@ -201,7 +222,25 @@ function shoot(){
   pitch=Math.min(1.5,pitch+0.004);
   muzzle.intensity=2.5;sShot();
   camera.getWorldDirection(tmpDir);
-  tmpDir.x+=(Math.random()-0.5)*0.014;tmpDir.y+=(Math.random()-0.5)*0.014;tmpDir.z+=(Math.random()-0.5)*0.014;
+  // аим-ассист на мобильных: доводим прицел до ближайшего врага в конусе ~7°
+  if(isMobile&&enemies.length){
+    var bestA=null,bestAng=0.12,fwd=new THREE.Vector3();
+    camera.getWorldDirection(fwd);
+    for(var ai=0;ai<enemies.length;ai++){
+      var en=enemies[ai];
+      var toE=new THREE.Vector3(en.obj.position.x-camera.position.x,en.obj.position.y+0.3-camera.position.y,en.obj.position.z-camera.position.z);
+      var dl2=toE.length();if(dl2<0.001)continue;
+      toE.x/=dl2;toE.y/=dl2;toE.z/=dl2;
+      var dot=Math.max(-1,Math.min(1,toE.x*fwd.x+toE.y*fwd.y+toE.z*fwd.z));
+      var ang=Math.acos(dot);
+      if(ang<bestAng){bestAng=ang;bestA=toE;}
+    }
+    if(bestA)tmpDir.copy(bestA);
+  }
+  var spread=isMobile?0.008:0.014;
+  tmpDir.x+=(Math.random()-0.5)*spread;
+  tmpDir.y+=(Math.random()-0.5)*spread;
+  tmpDir.z+=(Math.random()-0.5)*spread;
   tmpDir.normalize();
   ray.set(camera.position,tmpDir);
   var hits=ray.intersectObjects(targets,false);
@@ -234,7 +273,8 @@ function gameOver(){
   state='gameover';
   $('finalStats').textContent='СЧЁТ: '+score+' · ВОЛНА '+wave;
   overOv.style.display='flex';
-  if(document.exitPointerLock)document.exitPointerLock();
+  firing=false;
+  if(!isMobile&&document.exitPointerLock)document.exitPointerLock();
 }
 function resetGame(){
   while(enemies.length)removeEnemy(enemies[0]);
@@ -251,7 +291,7 @@ function spawnWave(){
   banner.textContent='ВОЛНА '+wave;bannerT=1.6;sWave();
 }
 
-// ── управление ──
+// ── управление: клавиатура/мышь ──
 addEventListener('keydown',function(e){
   keys[e.code]=true;
   if(e.code==='Space'||e.code==='KeyW'||e.code==='KeyA'||e.code==='KeyS'||e.code==='KeyD')e.preventDefault();
@@ -285,33 +325,134 @@ document.addEventListener('pointerlockchange',function(){
     if(state==='playing'){state='paused';pauseOv.style.display='flex';}
   }
 });
-pauseOv.addEventListener('click',lock);
+pauseOv.addEventListener('click',function(){
+  if(isMobile){
+    pauseOv.style.display='none';
+    if(state==='paused')state='playing';
+  }else lock();
+});
 renderer.domElement.addEventListener('click',function(){
-  if(state==='playing'&&document.pointerLockElement!==renderer.domElement)lock();
+  if(state==='playing'&&!isMobile&&document.pointerLockElement!==renderer.domElement)lock();
 });
 $('playBtn').addEventListener('click',function(){
-  audio();resetGame();state='playing';menu.style.display='none';lock();
+  audio();resetGame();state='playing';menu.style.display='none';
+  if(!isMobile)lock();
 });
 $('againBtn').addEventListener('click',function(){
-  audio();resetGame();state='playing';overOv.style.display='none';lock();
+  audio();resetGame();state='playing';overOv.style.display='none';
+  if(!isMobile)lock();
 });
+
+// ── тач-управление ──
+var joyVec={x:0,y:0},jumpReq=false;
+var stickId=null,lookId=null,fireId=null,lookX=0,lookY=0;
+var stickCx=0,stickCy=0,stickMax=1;
+
+if(isMobile){
+  var touchUI=$('touchUI'),stick=$('stick'),knob=$('stickKnob');
+  var btnFire=$('btnFire'),btnJump=$('btnJump'),btnReload=$('btnReload'),btnPause=$('btnPause');
+  touchUI.className='on';
+  $('kbHelp').style.display='none';
+  var note=$('mobileNote');
+  note.style.display='block';
+  note.textContent='Слева стик — движение (до упора = спринт). Справа палец — камера. Кнопки: ОГОНЬ, прыжок ▲, перезарядка ⟳.';
+
+  function stickGeom(){
+    var r=stick.getBoundingClientRect();
+    stickCx=r.left+r.width/2;stickCy=r.top+r.height/2;stickMax=r.width/2-28;
+  }
+  function moveStick(t){
+    var dx=t.clientX-stickCx,dy=t.clientY-stickCy;
+    var d=Math.sqrt(dx*dx+dy*dy);
+    if(d>stickMax){dx=dx/d*stickMax;dy=dy/d*stickMax;}
+    knob.style.transform='translate('+dx+'px,'+dy+'px)';
+    joyVec.x=dx/stickMax;joyVec.y=-dy/stickMax;
+  }
+  function resetStick(){
+    joyVec.x=0;joyVec.y=0;
+    knob.style.transform='translate(0,0)';
+  }
+  stick.addEventListener('touchstart',function(e){
+    e.preventDefault();e.stopPropagation();
+    if(stickId!==null)return;
+    var t=e.changedTouches[0];stickId=t.identifier;
+    stickGeom();moveStick(t);
+  },false);
+
+  document.addEventListener('touchstart',function(e){
+    if(state!=='playing')return;
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      if(t.identifier===stickId)continue;
+      if(lookId===null){lookId=t.identifier;lookX=t.clientX;lookY=t.clientY;}
+    }
+  },false);
+  document.addEventListener('touchmove',function(e){
+    e.preventDefault();
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      if(t.identifier===stickId)moveStick(t);
+      else if(t.identifier===lookId&&state==='playing'){
+        yaw-=(t.clientX-lookX)*0.006;
+        pitch-=(t.clientY-lookY)*0.006;
+        pitch=Math.max(-1.5,Math.min(1.5,pitch));
+        lookX=t.clientX;lookY=t.clientY;
+      }
+    }
+  },{passive:false});
+  function endTouch(e){
+    for(var i=0;i<e.changedTouches.length;i++){
+      var t=e.changedTouches[i];
+      if(t.identifier===stickId){stickId=null;resetStick();}
+      if(t.identifier===lookId)lookId=null;
+      if(t.identifier===fireId){fireId=null;firing=false;}
+    }
+  }
+  document.addEventListener('touchend',endTouch,false);
+  document.addEventListener('touchcancel',endTouch,false);
+
+  btnFire.addEventListener('touchstart',function(e){
+    e.preventDefault();e.stopPropagation();
+    if(fireId===null)fireId=e.changedTouches[0].identifier;
+    firing=true;
+  },false);
+  btnJump.addEventListener('touchstart',function(e){
+    e.preventDefault();e.stopPropagation();
+    jumpReq=true;
+  },false);
+  btnReload.addEventListener('touchstart',function(e){
+    e.preventDefault();e.stopPropagation();
+    if(state==='playing')startReload();
+  },false);
+  btnPause.addEventListener('touchstart',function(e){
+    e.preventDefault();e.stopPropagation();
+    if(state==='playing'){state='paused';firing=false;jumpReq=false;pauseOv.style.display='flex';}
+  },false);
+}
 
 // ── апдейты ──
 function updatePlayer(dt){
-  var sp=(keys['ShiftLeft']||keys['ShiftRight'])?9.5:6.2;
-  var f=(keys['KeyW']?1:0)-(keys['KeyS']?1:0);
-  var s=(keys['KeyD']?1:0)-(keys['KeyA']?1:0);
-  if(f!==0||s!==0){
+  var f,s;
+  if(isMobile){f=joyVec.y;s=joyVec.x;}
+  else{f=(keys['KeyW']?1:0)-(keys['KeyS']?1:0);s=(keys['KeyD']?1:0)-(keys['KeyA']?1:0);}
+  var mag=Math.sqrt(f*f+s*s);
+  var sprint=false;
+  if(mag>0.12){
+    if(mag>1){f/=mag;s/=mag;mag=1;}
+    sprint=isMobile?(mag>0.92):(keys['ShiftLeft']||keys['ShiftRight']);
+    var sp=sprint?9.5:6.2;
     var dir=new THREE.Vector3();camera.getWorldDirection(dir);dir.y=0;dir.normalize();
     var right=new THREE.Vector3().crossVectors(dir,new THREE.Vector3(0,1,0));
     var move=new THREE.Vector3().addScaledVector(dir,f).addScaledVector(right,s);
     move.normalize();
     camera.position.addScaledVector(move,sp*dt);
-    bobT+=dt*(sp>7?13:9);
+    bobT+=dt*(sprint?13:9);
   }
   camera.position.x=Math.max(-ARENA+1,Math.min(ARENA-1,camera.position.x));
   camera.position.z=Math.max(-ARENA+1,Math.min(ARENA-1,camera.position.z));
-  if(keys['Space']&&camera.position.y<=1.7)vy=5.4;
+  if(isMobile){
+    if(jumpReq){if(camera.position.y<=1.7)vy=5.4;jumpReq=false;}
+  }else if(keys['Space']&&camera.position.y<=1.7)vy=5.4;
   vy-=15*dt;camera.position.y+=vy*dt;
   if(camera.position.y<1.7){camera.position.y=1.7;vy=0;}
   camera.rotation.y=yaw;camera.rotation.x=pitch;
