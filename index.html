@@ -1088,12 +1088,15 @@ function updateHUD(){
     }
     if(menuChar){
       var mw=new THREE.Vector3();menuChar.getWorldPosition(mw);
-      s+=' MENU[pos'+mw.x.toFixed(2)+','+mw.y.toFixed(2)+','+mw.z.toFixed(2)+' rot'+menuChar.rotation.y.toFixed(2)+' vis'+menuChar.visible+']';
-      var iw=new THREE.Vector3();menuInner.getWorldPosition(iw);
-      s+=' INNER['+iw.x.toFixed(2)+','+iw.y.toFixed(2)+','+iw.z.toFixed(2)+']';
-      var hb=new THREE.Box3().setFromObject(menuInner);
-      if(hb.isEmpty())s+=' BBOX EMPTY';
-      else{var hs=hb.getSize(new THREE.Vector3());s+=' BBOX[h'+hs.y.toFixed(2)+']';}
+      s+=' MENU[tri'+renderer.info.render.triangles+' calls'+renderer.info.render.calls+' geoms'+renderer.info.memory.geometries+']';
+      var mDump='',mCount=0;
+      menuInner.traverse(function(o){
+        if(o.isMesh&&o.material&&mCount<6){
+          mDump+=o.material.type+':op'+(o.material.opacity!==undefined?o.material.opacity:'?')+(o.material.transparent?'T':'t')+(o.visible?'V':'v')+'|';
+          mCount++;
+        }
+      });
+      s+=' MAT['+mDump+']';
     }
     statsEl.textContent=s+' | f'+dbgFrames+' '+dbgErr;
   }
