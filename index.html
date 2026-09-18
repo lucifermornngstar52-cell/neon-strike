@@ -1185,6 +1185,7 @@ function buildMenuChar(){
   var bh=box.getSize(new THREE.Vector3()).y||1;
   var s=1.75/bh;
   menuInner.scale.set(s,s,s);
+  menuInner.rotation.y=Math.PI;
   if(C.key==='robot'){
     var hue=Math.random();
     var col=new THREE.Color().setHSL(hue,0.95,0.5);
@@ -1221,12 +1222,20 @@ function buildMenuChar(){
   for(var c=0;c<clips.length;c++)if(clips[c].name===C.anim){menuMixer.clipAction(clips[c]).play();break;}
   menuT=Math.random()*6.28;
   gunRig.visible=false;
+  $('hud').style.display='none';
+  $('minimap').style.display='none';
+  $('cross').style.display='none';
+  $('feed').style.display='none';
 }
 function killMenuChar(){
   if(menuChar){scene.remove(menuChar);menuChar=null;}
   if(menuMixer){menuMixer.stopAllAction();menuMixer=null;}
   menuInner=null;
   gunRig.visible=true;
+  $('hud').style.display='';
+  $('minimap').style.display='';
+  $('cross').style.display='';
+  $('feed').style.display='';
 }
 
 // ══════════ ГЛАВНЫЙ ЦИКЛ ══════════
