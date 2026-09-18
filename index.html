@@ -802,7 +802,11 @@ function switchWeapon(i,force){
   raiseT=0.22;
   muzzle.position.copy(weaponModels[curW].userData.tip.position);
   sSwitch();
-  updateWpnHud();
+  slotsEl.addEventListener('click',function(e){
+  var t=e.target;
+  if(t&&t.dataset&&t.dataset.w!==undefined&&state==='playing')switchWeapon(parseInt(t.dataset.w,10));
+},false);
+updateWpnHud();
   showBanner(WEAPONS[curW].name,false);
 }
 function startReload(){
@@ -1023,7 +1027,7 @@ function updateWpnHud(){
   wpnNameEl.textContent=WEAPONS[curW].name;
   var html='';
   for(var i=0;i<4;i++){
-    html+='<span class="wslot'+(i===curW?' cur':'')+'">'+(isMobile?'':(i+1)+' ')+WEAPONS[i].name+'</span>';
+    html+='<span class="wslot'+(i===curW?' cur':'')+'" data-w="'+i+'" style="pointer-events:auto;cursor:pointer">'+(isMobile?'':(i+1)+' ')+WEAPONS[i].name+'</span>';
   }
   slotsEl.innerHTML=html;
 }
@@ -1098,6 +1102,7 @@ function updateHUD(){
       });
       s+=' MAT['+mDump+']';
     }
+    s+=' w'+curW+'/'+load[curW].ammo;
     statsEl.textContent=s+' | f'+dbgFrames+' '+dbgErr;
   }
 }
