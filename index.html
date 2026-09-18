@@ -1184,10 +1184,23 @@ var CHARS=[
 var menuChar=null,menuInner=null,menuMixer=null,menuT=0,menuWpn=-1;
 function buildMenuChar(){
   var qs=new URLSearchParams(location.search);
+  var rawMode=qs.get('raw')==='1';
   var force=parseInt(qs.get('char')||'-1');
   var ci=(force>=0&&force<CHARS.length)?force:Math.floor(Math.random()*CHARS.length);
   var C=CHARS[ci],gltf=gAssets.chars[C.key];
   if(!gltf)return;
+  if(rawMode){
+    var rg=gltf.scene;
+    var rb=new THREE.Box3().setFromObject(rg);
+    var rh=rb.getSize(new THREE.Vector3()).y||1;
+    var rs=1.75/rh;
+    rg.scale.set(rs,rs,rs);
+    var rgg=new THREE.Group();rgg.add(rg);
+    scene.add(rgg);menuChar=rgg;menuInner=rg;menuMixer=null;
+    gunRig.visible=false;
+    $('hud').style.display='none';$('minimap').style.display='none';$('cross').style.display='none';$('feed').style.display='none';
+    return;
+  }
   menuInner=THREE.SkeletonUtils.clone(gltf.scene);
   var box=new THREE.Box3().setFromObject(menuInner);
   var bh=box.getSize(new THREE.Vector3()).y||1;
