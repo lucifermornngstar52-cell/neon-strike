@@ -389,7 +389,6 @@ function buildEnemyMesh(type){
   var bh=box.getSize(new THREE.Vector3()).y||1;
   var s=t.h/bh;
   inner.scale.set(s,s,s);
-  inner.rotation.y=Math.PI;
   var col=new THREE.Color(t.color);
   inner.traverse(function(o){
     if(o.isMesh&&o.material){
@@ -1185,7 +1184,6 @@ function buildMenuChar(){
   var bh=box.getSize(new THREE.Vector3()).y||1;
   var s=1.75/bh;
   menuInner.scale.set(s,s,s);
-  menuInner.rotation.y=Math.PI;
   if(C.key==='robot'){
     var hue=Math.random();
     var col=new THREE.Color().setHSL(hue,0.95,0.5);
