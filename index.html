@@ -1202,6 +1202,10 @@ function buildMenuChar(){
     scene.add(rgg);menuChar=rgg;menuInner=rg;menuMixer=null;
     gunRig.visible=false;
     $('hud').style.display='none';$('minimap').style.display='none';$('cross').style.display='none';$('feed').style.display='none';
+    if(dbgMode){
+      scene.add(new THREE.SkeletonHelper(rg));
+      rg.traverse(function(o){if(o.isMesh){o.material=new THREE.MeshBasicMaterial({color:0x00ff00,skinning:true});}});
+    }
     return;
   }
   menuInner=THREE.SkeletonUtils.clone(gltf.scene);
