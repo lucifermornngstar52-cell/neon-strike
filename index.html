@@ -134,7 +134,7 @@ window.addEventListener('error',function(e){
   errbox.textContent='JS ERROR: '+(e.message||'?')+' @ '+(e.lineno||'?');
 });
 
-var isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints|0)>0;
+var isMobile=('ontouchstart' in window)||(navigator.maxTouchPoints|0)>0||new URLSearchParams(location.search).get('forcemobile')==='1';
 
 var state='menu';
 var yaw=0,pitch=0,vy=0,bobT=0,shake=0;
