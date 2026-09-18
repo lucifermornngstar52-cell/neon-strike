@@ -27,7 +27,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:
 #wpnname{font-size:14px;color:#99aacc;letter-spacing:2px}
 .wslot{display:inline-block;margin-left:6px;padding:2px 8px;border:1px solid #113355;border-radius:4px;color:#456}
 .wslot.cur{border-color:#00ffff;color:#00ffff;text-shadow:0 0 6px #00ffff88}
-#errbox{display:none;position:fixed;left:8px;bottom:60px;max-width:90%;background:#330000;color:#ff6666;font-size:11px;padding:6px 8px;border:1px solid #ff4444;z-index:99}
+#errbox{display:none;position:fixed;left:8px;bottom:60px;max-width:90%;background:#330000;color:#ff6666;font-size:11px;padding:6px 8px;border:1px solid #ff4444;z-index:99;pointer-events:none}
 
 #menu{background:linear-gradient(180deg,rgba(4,4,14,.82) 0%,rgba(4,4,14,.05) 24%,rgba(4,4,14,.05) 76%,rgba(4,4,14,.85) 100%);justify-content:flex-start;padding-top:5vh}
 #menu h1{font-size:44px;margin-bottom:4px}
@@ -50,7 +50,17 @@ html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:
 #touchUI.on{display:block}
 #stick{position:absolute;left:24px;bottom:110px;width:132px;height:132px;border:2px solid #00ffcc55;border-radius:50%;background:rgba(0,255,204,0.06);pointer-events:auto;touch-action:none}
 #stickKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(0,255,204,0.25);border:1px solid #00ffcc99}
-.tbtn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;font-size:13px;letter-spacing:1px;border:2px solid #00ffff77;background:rgba(0,255,255,0.08);color:#00ffff}
+.tbtn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;font-size:13px;letter-spacing:1px;border:2px solid #00ffff77;background:rgba(0,255,255,0.08);color:#00ffff;transform-origin:top left}
+.tbtn.prs{filter:brightness(1.8)}
+#stick{transform-origin:top left}
+#btnGear{right:66px;top:12px;width:42px;height:42px;border-radius:10px;font-size:18px}
+#btnDone{left:calc(50% - 60px);top:16px;width:120px;height:44px;border-radius:10px;border-color:#22ff6699;background:rgba(34,255,102,0.14);color:#22ff66;font-size:14px;z-index:40}
+body.editmode .tbtn,body.editmode #stick{outline:2px dashed #ffcc33;outline-offset:3px}
+#setOv{z-index:30}
+#setOv h1{font-size:26px;letter-spacing:4px}
+#setOv .btn{margin:8px;font-size:15px;padding:12px 22px}
+#setOv input[type=range]{width:72%;accent-color:#00ffff}
+#pauseSetBtn{font-size:15px;padding:12px 22px;margin-top:12px}
 #btnFire{right:26px;bottom:104px;width:92px;height:92px;font-size:15px;border-color:#ff336699;background:rgba(255,51,102,0.12);color:#ff5577}
 #btnJump{right:134px;bottom:170px;width:60px;height:60px}
 #btnReload{right:52px;bottom:212px;width:60px;height:60px}
@@ -93,6 +103,8 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 <div id="btnReload" class="tbtn">⟳</div>
 <div id="btnWeapon" class="tbtn">ОРУЖ</div>
 <div id="btnPause" class="tbtn">II</div>
+<div id="btnGear" class="tbtn">⚙</div>
+<div id="btnDone" class="tbtn" style="display:none">✓ ГОТОВО</div>
 </div>
 <div class="ov" id="menu">
 <h1>NEON STRIKE</h1>
@@ -109,6 +121,18 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 <div class="ov" id="pauseOv">
 <h1>ПАУЗА</h1>
 <p>кликни, чтобы продолжить</p>
+<button class="btn" id="pauseSetBtn" style="display:none">НАСТРОЙКИ УПРАВЛЕНИЯ</button>
+</div>
+<div class="ov" id="setOv" style="display:none">
+<h1>НАСТРОЙКИ УПРАВЛЕНИЯ</h1>
+<p style="color:#8fd8ff;font-size:14px">РАЗМЕР КНОПОК · <span id="ctlSizeVal">100%</span></p>
+<input type="range" id="ctlSize" min="60" max="170" value="100">
+<button class="btn" id="ctlEditBtn">РАССТАВИТЬ КНОПКИ</button>
+<div>
+<button class="btn" id="ctlResetBtn" style="background:transparent;border:1px solid #ff336677;color:#ff5577">СБРОС</button>
+<button class="btn" id="ctlCloseBtn">ИГРАТЬ</button>
+</div>
+<p style="font-size:12px;color:#7fa8cc;max-width:80%">Перетаскивай кнопки и джойстик куда удобно. Позиции и размер сохраняются автоматически.</p>
 </div>
 <div class="ov" id="overOv">
 <h1 style="color:#ff3366;text-shadow:0 0 18px #ff336677">ТЫ ПОГИБ</h1>
@@ -640,6 +664,7 @@ function damagePlayer(n){
 }
 function gameOver(){
   state='gameover';firing=false;
+  if(isMobile)$('touchUI').classList.remove('on');
   var acc=shotsFired>0?Math.round(shotsHit/shotsFired*100):0;
   $('finalStats').innerHTML='СЧЁТ '+score+' · ВОЛНА '+wave+'<br>УБИЙСТВ '+kills+' · ХЕДШОТОВ '+headshots+'<br>ТОЧНОСТЬ '+acc+'%';
   overOv.style.display='flex';
@@ -809,19 +834,21 @@ try{
 // ══════════ СТРЕЛЬБА ══════════
 function switchWeapon(i,force){
   if(i===curW&&!force)return;
+  var nw=(i+4)%4;
+  if(!weaponModels[nw])return;
   if(reloading>0)reloading=0;
-  curW=(i+4)%4;
-  for(var w=0;w<4;w++)weaponModels[w].visible=(w===curW);
+  curW=nw;
+  for(var w=0;w<4;w++)if(weaponModels[w])weaponModels[w].visible=(w===curW);
   raiseT=0.22;
-  muzzle.position.copy(weaponModels[curW].userData.tip.position);
-  sSwitch();
-  slotsEl.addEventListener('click',function(e){
+  if(weaponModels[curW].userData&&weaponModels[curW].userData.tip)muzzle.position.copy(weaponModels[curW].userData.tip.position);
+  try{sSwitch();}catch(ex){}
+  updateWpnHud();
+  showBanner(WEAPONS[curW].name,false);
+}
+slotsEl.addEventListener('pointerdown',function(e){
   var t=e.target;
   if(t&&t.dataset&&t.dataset.w!==undefined&&state==='playing')switchWeapon(parseInt(t.dataset.w,10));
 },false);
-updateWpnHud();
-  showBanner(WEAPONS[curW].name,false);
-}
 function startReload(){
   var w=WEAPONS[curW],st=load[curW];
   if(reloading>0||st.ammo===w.mag||st.reserve===0)return;
@@ -957,8 +984,8 @@ pauseOv.addEventListener('click',function(){
 renderer.domElement.addEventListener('click',function(){
   if(state==='playing'&&!isMobile&&document.pointerLockElement!==renderer.domElement)lock();
 });
-$('playBtn').addEventListener('click',function(){if(!gAssets.ready)return;killMenuChar();audio();resetGame();state='playing';menu.style.display='none';if(!isMobile)lock();});
-$('againBtn').addEventListener('click',function(){if(!gAssets.ready)return;audio();resetGame();state='playing';overOv.style.display='none';if(!isMobile)lock();});
+$('playBtn').addEventListener('click',function(){if(!gAssets.ready)return;killMenuChar();audio();resetGame();state='playing';menu.style.display='none';if(isMobile){$('touchUI').classList.add('on');if(window.__applyCtl)window.__applyCtl();}else lock();});
+$('againBtn').addEventListener('click',function(){if(!gAssets.ready)return;audio();resetGame();state='playing';overOv.style.display='none';if(isMobile){$('touchUI').classList.add('on');if(window.__applyCtl)window.__applyCtl();}else lock();});
 
 // ══════════ ТАЧ ══════════
 var joyVec={x:0,y:0},jumpReq=false;
@@ -966,12 +993,11 @@ var stickId=null,lookId=null,fireId=null,lookX=0,lookY=0;
 var stickCx=0,stickCy=0,stickMax=1;
 if(isMobile){
   var touchUI=$('touchUI'),stick=$('stick'),knob=$('stickKnob');
-  var btnFire=$('btnFire'),btnJump=$('btnJump'),btnReload=$('btnReload'),btnPause=$('btnPause'),btnWeapon=$('btnWeapon');
-  touchUI.className='on';
+  var btnFire=$('btnFire'),btnJump=$('btnJump'),btnReload=$('btnReload'),btnPause=$('btnPause'),btnWeapon=$('btnWeapon'),btnGear=$('btnGear'),btnDone=$('btnDone');
   document.documentElement.classList.add('mobile');
   $('kbHelp').style.display='none';
   var note=$('mobileNote');note.style.display='block';
-  note.textContent='Стик слева — движение (до упора = спринт). Справа палец — камера. Кнопки: ОГОНЬ, прыжок, перезарядка, смена оружия. Аим-ассист включён.';
+  note.textContent='Стик слева — движение (до упора = спринт). Справа палец — камера. Кнопки: ОГОНЬ, прыжок, перезарядка, смена оружия. Оружие — кнопка ОРУЖ или тап по названию оружия справа внизу. ⚙ — настройки кнопок.';
   function stickGeom(){
     var r=stick.getBoundingClientRect();
     stickCx=r.left+r.width/2;stickCy=r.top+r.height/2;stickMax=r.width/2-28;
@@ -995,10 +1021,12 @@ if(isMobile){
     for(var i=0;i<e.changedTouches.length;i++){
       var t=e.changedTouches[i];
       if(t.identifier===stickId)continue;
+      if(t.target&&t.target.closest&&t.target.closest('.tbtn,#stick,#setOv'))continue;
       if(lookId===null){lookId=t.identifier;lookX=t.clientX;lookY=t.clientY;}
     }
   },false);
   document.addEventListener('touchmove',function(e){
+    if(e.target&&e.target.closest&&e.target.closest('#setOv,input'))return;
     e.preventDefault();
     for(var i=0;i<e.changedTouches.length;i++){
       var t=e.changedTouches[i];
@@ -1021,19 +1049,147 @@ if(isMobile){
   }
   document.addEventListener('touchend',endTouch,false);
   document.addEventListener('touchcancel',endTouch,false);
-  btnFire.addEventListener('touchstart',function(e){
-    e.preventDefault();e.stopPropagation();
-    if(fireId===null)fireId=e.changedTouches[0].identifier;
+  // Все кнопки — через pointerdown: надёжно работает на Android/iOS.
+  function bindBtn(el,fn){
+    el.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      if(editMode)return;
+      el.classList.add('prs');
+      fn(e);
+    },false);
+    var up=function(){el.classList.remove('prs');};
+    el.addEventListener('pointerup',up,false);
+    el.addEventListener('pointercancel',up,false);
+    el.addEventListener('pointerleave',up,false);
+  }
+  bindBtn(btnFire,function(){
     firing=true;
     if(!WEAPONS[curW].auto)firingHold=true;
+  });
+  var stopFire=function(){firing=false;};
+  btnFire.addEventListener('pointerup',stopFire,false);
+  btnFire.addEventListener('pointercancel',stopFire,false);
+  btnFire.addEventListener('pointerleave',stopFire,false);
+  bindBtn(btnJump,function(){jumpReq=true;});
+  bindBtn(btnReload,function(){if(state==='playing')startReload();});
+  bindBtn(btnWeapon,function(){if(state==='playing')switchWeapon(curW+1);});
+  bindBtn(btnPause,function(){
+    if(state==='playing'){state='paused';firing=false;jumpReq=false;pauseOv.style.display='flex';$('pauseSetBtn').style.display='inline-block';}
+  });
+  bindBtn(btnGear,function(){
+    if(state==='playing'){state='paused';firing=false;jumpReq=false;}
+    openSettings();
+  });
+
+  // ═══ КАСТОМИЗАЦИЯ: размер + перетаскивание кнопок ═══
+  var CTL_IDS=['stick','btnFire','btnJump','btnReload','btnWeapon','btnPause','btnGear'];
+  var editMode=false, dragging=null;
+  function getCtl(){
+    try{return JSON.parse(localStorage.nsCtl||'{}');}catch(e){return {};}
+  }
+  function saveCtl(d){try{localStorage.nsCtl=JSON.stringify(d);}catch(e){}}
+  function curScale(){var d=getCtl();return d&&d.s?d.s:1;}
+  function applyCtl(){
+    var d=getCtl(),vw=innerWidth,vh=innerHeight,s=d.s||1;
+    for(var i=0;i<CTL_IDS.length;i++){
+      var el=$(CTL_IDS[i]);
+      el.style.transform='scale('+s+')';
+      if(d.pos&&d.pos[CTL_IDS[i]]){
+        var w=el.offsetWidth,h=el.offsetHeight;
+        el.style.left=Math.round(d.pos[CTL_IDS[i]][0]*vw-w/2)+'px';
+        el.style.top=Math.round(d.pos[CTL_IDS[i]][1]*vh-h/2)+'px';
+        el.style.right='auto';
+        el.style.bottom='auto';
+      }
+    }
+  }
+  function resetCtl(){
+    saveCtl({});
+    for(var i=0;i<CTL_IDS.length;i++){
+      var el=$(CTL_IDS[i]);
+      el.style.transform='';el.style.left='';el.style.top='';el.style.right='';el.style.bottom='';
+    }
+    $('ctlSize').value=100;$('ctlSizeVal').textContent='100%';
+  }
+  function openSettings(){
+    $('setOv').style.display='flex';
+    $('ctlSize').value=Math.round(curScale()*100);
+    $('ctlSizeVal').textContent=Math.round(curScale()*100)+'%';
+  }
+  function startEdit(){
+    editMode=true;
+    document.body.classList.add('editmode');
+    $('setOv').style.display='none';
+    btnDone.style.display='flex';
+    firing=false;
+  }
+  function endEdit(){
+    editMode=false;
+    document.body.classList.remove('editmode');
+    btnDone.style.display='none';
+    // сохранить позиции
+    var d=getCtl();d.pos=d.pos||{};
+    var vw=innerWidth,vh=innerHeight;
+    for(var i=0;i<CTL_IDS.length;i++){
+      var r=$(CTL_IDS[i]).getBoundingClientRect();
+      d.pos[CTL_IDS[i]]=[+((r.left+r.width/2)/vw).toFixed(4),+((r.top+r.height/2)/vh).toFixed(4)];
+    }
+    saveCtl(d);
+    openSettings();
+  }
+  // перетаскивание в режиме правки
+  function bindDrag(id){
+    var el=$(id);
+    el.addEventListener('pointerdown',function(e){
+      if(!editMode)return;
+      e.preventDefault();e.stopPropagation();
+      var sc=curScale();
+      var r=el.getBoundingClientRect();
+      dragging={el:el,id:id,sx:e.clientX,sy:e.clientY,l0:r.left,t0:r.top,sc:sc};
+      try{el.setPointerCapture(e.pointerId);}catch(ex){}
+    },false);
+    el.addEventListener('pointermove',function(e){
+      if(!dragging||dragging.el!==el)return;
+      e.preventDefault();
+      var sc=dragging.sc;
+      var nl=dragging.l0+(e.clientX-dragging.sx)/sc;
+      var nt=dragging.t0+(e.clientY-dragging.sy)/sc;
+      nl=Math.max(0,Math.min(innerWidth-el.offsetWidth,nl));
+      nt=Math.max(0,Math.min(innerHeight-el.offsetHeight,nt));
+      el.style.left=nl+'px';
+      el.style.top=nt+'px';
+      el.style.right='auto';
+      el.style.bottom='auto';
+    },false);
+    var fin=function(){if(dragging&&dragging.el===el)dragging=null;};
+    el.addEventListener('pointerup',fin,false);
+    el.addEventListener('pointercancel',fin,false);
+  }
+  for(var ci=0;ci<CTL_IDS.length;ci++)bindDrag(CTL_IDS[ci]);
+  btnDone.addEventListener('pointerdown',function(e){
+    e.preventDefault();
+    if(editMode)endEdit();
   },false);
-  btnJump.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();jumpReq=true;},false);
-  btnReload.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();if(state==='playing')startReload();},false);
-  btnWeapon.addEventListener('touchstart',function(e){e.preventDefault();e.stopPropagation();if(state==='playing')switchWeapon(curW+1);},false);
-  btnPause.addEventListener('touchstart',function(e){
-    e.preventDefault();e.stopPropagation();
-    if(state==='playing'){state='paused';firing=false;jumpReq=false;pauseOv.style.display='flex';}
+  $('ctlSize').addEventListener('input',function(){
+    var v=parseInt(this.value,10)||100;
+    $('ctlSizeVal').textContent=v+'%';
+    var d=getCtl();d.s=v/100;saveCtl(d);
+    applyCtl();
   },false);
+  $('ctlEditBtn').addEventListener('click',startEdit,false);
+  $('ctlResetBtn').addEventListener('click',function(){resetCtl();},false);
+  $('ctlCloseBtn').addEventListener('click',function(){
+    $('setOv').style.display='none';
+    pauseOv.style.display='none';
+    if(state==='paused')state='playing';
+  },false);
+  $('pauseSetBtn').addEventListener('click',function(e){
+    e.stopPropagation();
+    openSettings();
+  },false);
+  applyCtl();
+  window.__applyCtl=applyCtl;
+  addEventListener('resize',function(){applyCtl();},false);
 }
 
 // ══════════ HUD ══════════
