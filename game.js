@@ -1,111 +1,4 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<title>NEON STRIKE — 3D FPS</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Courier New',monospace;color:#cceeff;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
-#hud{position:fixed;inset:0;pointer-events:none;z-index:5}
-#cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#00ffcc;text-shadow:0 0 6px #00ffcc88;z-index:6;pointer-events:none}
-#hitmark{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:22px;color:#ffffff;opacity:0;z-index:6;pointer-events:none;font-weight:bold}
-#vign{position:fixed;inset:0;box-shadow:inset 0 0 140px 40px rgba(255,0,40,.85);opacity:0;z-index:6;pointer-events:none}
-#stats{position:fixed;top:14px;left:16px;font-size:14px;line-height:1.6;color:#8fd;text-shadow:0 0 4px #000}
-#hpwrap{position:fixed;bottom:18px;left:16px;width:230px}
-#hpbar{height:12px;background:#112233;border:1px solid #005577;margin-top:4px}
-#hpfill{height:100%;width:100%;background:linear-gradient(90deg,#00ffaa,#00ccff)}
-#ammo{position:fixed;bottom:16px;right:20px;font-size:30px;color:#00ffff;text-shadow:0 0 8px #00ffff66}
-#banner{position:fixed;top:26%;left:50%;transform:translateX(-50%);font-size:44px;letter-spacing:6px;color:#00ffcc;text-shadow:0 0 18px #00ffcc;opacity:0;z-index:6;pointer-events:none;white-space:nowrap}
-#minimap{position:fixed;top:14px;right:16px;border:1px solid #004455;border-radius:8px;background:rgba(4,8,18,0.75);z-index:5}
-#feed{position:fixed;top:172px;right:16px;text-align:right;font-size:12px;z-index:5;pointer-events:none}
-.fi{margin:3px 0;text-shadow:0 0 4px #000}
-#bosswrap{position:fixed;top:56px;left:50%;transform:translateX(-50%);width:320px;display:none;z-index:5;text-align:center;color:#cc88ff;text-shadow:0 0 6px #cc44ff88;font-size:13px;letter-spacing:3px}
-#bossbar{height:10px;background:#221133;border:1px solid #cc44ff88;margin-top:4px}
-#bossfill{height:100%;background:linear-gradient(90deg,#cc44ff,#ff4488);width:100%}
-#wpnbar{position:fixed;right:20px;bottom:64px;text-align:right;font-size:12px;z-index:5;pointer-events:none}
-#wpnname{font-size:14px;color:#99aacc;letter-spacing:2px}
-.wslot{display:inline-block;margin-left:6px;padding:2px 8px;border:1px solid #113355;border-radius:4px;color:#456}
-.wslot.cur{border-color:#00ffff;color:#00ffff;text-shadow:0 0 6px #00ffff88}
-#errbox{display:none;position:fixed;left:8px;bottom:60px;max-width:90%;background:#330000;color:#ff6666;font-size:11px;padding:6px 8px;border:1px solid #ff4444;z-index:99}
 
-#menu{background:linear-gradient(180deg,rgba(4,4,14,.82) 0%,rgba(4,4,14,.05) 24%,rgba(4,4,14,.05) 76%,rgba(4,4,14,.85) 100%);justify-content:flex-start;padding-top:5vh}
-#menu h1{font-size:44px;margin-bottom:4px}
-#playBtn{position:absolute;right:26px;bottom:26px;margin:0;padding:16px 56px;font-size:22px;box-shadow:0 0 18px #00ffff33}
-#menu .note{position:absolute;right:26px;bottom:96px;margin:0}
-#kbHelp{position:absolute;left:22px;bottom:20px;text-align:left;max-width:320px}
-#kbHelp p{font-size:12px;margin:3px 0;color:#7fa8cc}
-@media (max-width:600px){#playBtn{right:16px;bottom:16px;padding:14px 42px;font-size:19px}#kbHelp{display:none}#menu .note{right:16px;bottom:84px}}
-.ov{position:fixed;inset:0;background:rgba(4,4,14,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;text-align:center}
-.ov h1{font-size:52px;letter-spacing:8px;color:#00ffcc;text-shadow:0 0 20px #00ffcc77;margin-bottom:10px}
-.ov p{color:#99aacc;margin:6px 0;font-size:15px}
-.btn{margin-top:22px;padding:14px 46px;font-size:20px;letter-spacing:3px;font-family:inherit;background:transparent;color:#00ffff;border:2px solid #00ffff;cursor:pointer;transition:.15s}
-.btn:hover{background:#00ffff;color:#002222;box-shadow:0 0 24px #00ffff88}
-.btn:disabled{opacity:.35;cursor:wait;box-shadow:none}
-#pauseOv{display:none}
-#overOv{display:none}
-.note{color:#ffaa44;font-size:13px;margin-top:10px;max-width:340px}
-@media (max-width:600px){.ov h1{font-size:32px;letter-spacing:4px}.ov p{font-size:13px}.btn{padding:12px 34px;font-size:17px}#minimap{width:110px;height:110px}#feed{top:132px}}
-#touchUI{display:none;position:fixed;inset:0;z-index:8;pointer-events:none}
-#touchUI.on{display:block}
-#stick{position:absolute;left:24px;bottom:110px;width:132px;height:132px;border:2px solid #00ffcc55;border-radius:50%;background:rgba(0,255,204,0.06);pointer-events:auto;touch-action:none}
-#stickKnob{position:absolute;left:50%;top:50%;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;background:rgba(0,255,204,0.25);border:1px solid #00ffcc99}
-.tbtn{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;pointer-events:auto;touch-action:none;font-size:13px;letter-spacing:1px;border:2px solid #00ffff77;background:rgba(0,255,255,0.08);color:#00ffff}
-#btnFire{right:26px;bottom:104px;width:92px;height:92px;font-size:15px;border-color:#ff336699;background:rgba(255,51,102,0.12);color:#ff5577}
-#btnJump{right:134px;bottom:170px;width:60px;height:60px}
-#btnReload{right:52px;bottom:212px;width:60px;height:60px}
-#btnWeapon{left:26px;bottom:270px;width:66px;height:44px;border-radius:10px;font-size:11px}
-#btnPause{right:16px;top:12px;width:42px;height:42px;border-radius:10px}
-</style>
-</head>
-<body>
-<div id="hud">
-<div id="stats">СЧЁТ <span id="score">0</span> · ВОЛНА <span id="wave">0</span> · ВРАГИ <span id="left">0</span><br>УБИЙСТВА <span id="kills">0</span> · ХЕДШОТЫ <span id="hs">0</span></div>
-<div id="hpwrap">HP <span id="hptxt">100</span><div id="hpbar"><div id="hpfill"></div></div></div>
-<div id="wpnbar"><span id="wpnname">ПИСТОЛЕТ</span><br><span id="slots"></span></div>
-<div id="ammo">12 / ∞</div>
-</div>
-<canvas id="minimap" width="150" height="150"></canvas>
-<div id="feed"></div>
-<div id="bosswrap">БОСС<div id="bossbar"><div id="bossfill"></div></div></div>
-<div id="cross">+</div>
-<div id="hitmark">+</div>
-<div id="vign"></div>
-<div id="banner"></div>
-<div id="errbox"></div>
-<div id="touchUI">
-<div id="stick"><div id="stickKnob"></div></div>
-<div id="btnFire" class="tbtn">ОГОНЬ</div>
-<div id="btnJump" class="tbtn">▲</div>
-<div id="btnReload" class="tbtn">⟳</div>
-<div id="btnWeapon" class="tbtn">ОРУЖ</div>
-<div id="btnPause" class="tbtn">II</div>
-</div>
-<div class="ov" id="menu">
-<h1>NEON STRIKE</h1>
-<p class="sub" style="color:#8fd8ff">3D FPS · волны · боссы · лут</p>
-<div id="kbHelp">
-<p>ЛКМ — стрелять · ПКМ — прицел · WASD — движение · SHIFT — спринт · SPACE — прыжок</p>
-<p>1-4 — оружие · колесо — переключение · R — перезарядка · ESC — пауза</p>
-<p>Хедшот = двойной урон · HP регенится вне боя · собирай аптечки и патроны</p>
-</div>
-<button class="btn" id="playBtn" disabled>СТАРТ</button>
-<p class="note" id="loadNote">ЗАГРУЗКА МОДЕЛЕЙ 0%</p>
-<p class="note" id="mobileNote" style="display:none"></p>
-</div>
-<div class="ov" id="pauseOv">
-<h1>ПАУЗА</h1>
-<p>кликни, чтобы продолжить</p>
-</div>
-<div class="ov" id="overOv">
-<h1 style="color:#ff3366;text-shadow:0 0 18px #ff336677">ТЫ ПОГИБ</h1>
-<p id="finalStats">…</p>
-<button class="btn" id="againBtn">ЕЩЁ РАЗ</button>
-</div>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/loaders/GLTFLoader.js"></script>
-<script src="https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/js/utils/SkeletonUtils.js"></script>
-<script>
 (function(){
 'use strict';
 var $=function(id){return document.getElementById(id);};
@@ -941,7 +834,7 @@ pauseOv.addEventListener('click',function(){
 renderer.domElement.addEventListener('click',function(){
   if(state==='playing'&&!isMobile&&document.pointerLockElement!==renderer.domElement)lock();
 });
-$('playBtn').addEventListener('click',function(){if(!gAssets.ready)return;killMenuChar();audio();resetGame();state='playing';menu.style.display='none';if(!isMobile)lock();});
+$('playBtn').addEventListener('click',function(){if(!gAssets.ready)return;audio();resetGame();state='playing';menu.style.display='none';if(!isMobile)lock();});
 $('againBtn').addEventListener('click',function(){if(!gAssets.ready)return;audio();resetGame();state='playing';overOv.style.display='none';if(!isMobile)lock();});
 
 // ══════════ ТАЧ ══════════
@@ -1115,15 +1008,12 @@ function updateFX(dt){
 // ══════════ ЗАГРУЗКА АССЕТОВ ══════════
 var ASSETS='https://lucifermornngstar52-cell.github.io/neon-strike-assets/';
 var ROBOT_URL='https://cdn.jsdelivr.net/gh/mrdoob/three.js@r128/examples/models/gltf/RobotExpressive/RobotExpressive.glb';
-var gAssets={weapons:[null,null,null,null],robot:null,robotClips:null,city:{},sky:{},props:{},chars:{},charsClips:{},need:0,got:0,ready:false};
+var gAssets={weapons:[null,null,null,null],robot:null,robotClips:null,city:{},sky:{},props:{},need:0,got:0,ready:false};
 (function preloadAssets(){
   var loadNoteEl=$('loadNote');
   var files=[];
   for(var i=0;i<4;i++)files.push({url:ASSETS+WCFG[i].file,slot:'w'+i});
   files.push({url:ROBOT_URL,slot:'robot'});
-  files.push({url:ASSETS+'chars/robot.glb',slot:'char:robot'});
-  files.push({url:ASSETS+'chars/soldier.glb',slot:'char:soldier'});
-  files.push({url:ASSETS+'chars/xbot.glb',slot:'char:xbot'});
   for(var b=0;b<CITY_LIST.length;b++)files.push({url:ASSETS+'city/'+CITY_LIST[b]+'.glb',slot:'city'});
   for(var s=0;s<SKY_LIST.length;s++)files.push({url:ASSETS+'city/'+SKY_LIST[s]+'.glb',slot:'sky'});
   files.push({url:ASSETS+'weapons/crate-medium.glb',slot:'prop:weapons/crate-medium'});
@@ -1140,9 +1030,8 @@ var gAssets={weapons:[null,null,null,null],robot:null,robotClips:null,city:{},sk
     for(var w2=0;w2<4;w2++)weaponModels[w2]=buildWeaponModel(w2,gAssets.weapons[w2].scene);
     weaponModels[0].visible=true;
     buildCity();
-    buildMenuChar();
     var pb=$('playBtn');pb.disabled=false;
-    if(loadNoteEl)loadNoteEl.textContent='ГОТОВО · ЖМИ «СТАРТ»';
+    if(loadNoteEl)loadNoteEl.textContent='ГОТОВО · ЖМИ «ИГРАТЬ»';
   }
   function fail(url){
     errbox.style.display='block';
@@ -1154,7 +1043,6 @@ var gAssets={weapons:[null,null,null,null],robot:null,robotClips:null,city:{},sk
         function(gltf){
           if(ff.slot==='robot'){gAssets.robot=gltf.scene;gAssets.robotClips=gltf.animations;}
           else if(ff.slot.charAt(0)==='w'&&ff.slot.length===2){gAssets.weapons[parseInt(ff.slot.charAt(1))]=gltf;}
-          else if(ff.slot.indexOf('char:')===0){var ck=ff.slot.slice(5);gAssets.chars[ck]=gltf;gAssets.charsClips[ck]=gltf.animations;}
           else if(ff.slot.indexOf('prop:')===0){gAssets.props[ff.slot.slice(5)]=gltf;}
           else if(ff.slot==='city'){gAssets.city[ff.url.slice(ff.url.lastIndexOf('/')+1,-4)]=gltf;}
           else if(ff.slot==='sky'){gAssets.sky[ff.url.slice(ff.url.lastIndexOf('/')+1,-4)]=gltf;}
@@ -1165,69 +1053,6 @@ var gAssets={weapons:[null,null,null,null],robot:null,robotClips:null,city:{},sk
     })(files[f]);
   }
 })();
-
-
-// ══════════ МЕНЮ-ПЕРСОНАЖ (витрина) ══════════
-var CHARS=[
- {key:'robot',  anim:'Idle', hand:'Hand.R',             wpPos:[0,0.10,0.02], wpRot:[1.57,0,0],   face:0},
- {key:'soldier',anim:'Idle', hand:'mixamorig:RightHand', wpPos:[0,0.12,0.03], wpRot:[1.57,0,1.57],face:0},
- {key:'xbot',   anim:'idle', hand:'mixamorig:RightHand', wpPos:[0,0.12,0.03], wpRot:[1.57,0,1.57],face:0}
-];
-var menuChar=null,menuInner=null,menuMixer=null,menuT=0,menuWpn=-1;
-function buildMenuChar(){
-  var qs=new URLSearchParams(location.search);
-  var force=parseInt(qs.get('char')||'-1');
-  var ci=(force>=0&&force<CHARS.length)?force:Math.floor(Math.random()*CHARS.length);
-  var C=CHARS[ci],gltf=gAssets.chars[C.key];
-  if(!gltf)return;
-  menuInner=THREE.SkeletonUtils.clone(gltf.scene);
-  var box=new THREE.Box3().setFromObject(menuInner);
-  var bh=box.getSize(new THREE.Vector3()).y||1;
-  var s=1.75/bh;
-  menuInner.scale.set(s,s,s);
-  if(C.key==='robot'){
-    var hue=Math.random();
-    var col=new THREE.Color().setHSL(hue,0.95,0.5);
-    menuInner.traverse(function(o){
-      if(o.isMesh&&o.material&&o.material.name==='Main'){
-        o.material=o.material.clone();
-        o.material.color.lerp(col,0.5);
-        o.material.emissive=col.clone();
-        o.material.emissiveIntensity=0.35;
-      }
-    });
-  }
-  var g=new THREE.Group();
-  g.add(menuInner);
-  // случайное оружие в правую кисть
-  var wi=Math.floor(Math.random()*4);
-  menuWpn=wi;
-  var wpn=gAssets.weapons[wi].scene.clone(true);
-  wpn.traverse(function(o){if(o.isMesh&&o.material)o.material=o.material.clone();});
-  var hold=new THREE.Group();
-  hold.add(wpn);
-  hold.scale.setScalar(0.85/s);
-  hold.position.set(C.wpPos[0],C.wpPos[1],C.wpPos[2]);
-  hold.rotation.set(C.wpRot[0],C.wpRot[1],C.wpRot[2]);
-  var hand=null;
-  menuInner.traverse(function(o){if(!hand&&o.name===C.hand)hand=o;});
-  if(hand)hand.add(hold);else{hold.position.set(0,1.1,0.2);g.add(hold);}
-  g.position.set(0,0,0);
-  g.visible=true;
-  scene.add(g);
-  menuChar=g;
-  menuMixer=new THREE.AnimationMixer(menuInner);
-  var clips=gAssets.charsClips[C.key]||[];
-  for(var c=0;c<clips.length;c++)if(clips[c].name===C.anim){menuMixer.clipAction(clips[c]).play();break;}
-  menuT=Math.random()*6.28;
-  gunRig.visible=false;
-}
-function killMenuChar(){
-  if(menuChar){scene.remove(menuChar);menuChar=null;}
-  if(menuMixer){menuMixer.stopAllAction();menuMixer=null;}
-  menuInner=null;
-  gunRig.visible=true;
-}
 
 // ══════════ ГЛАВНЫЙ ЦИКЛ ══════════
 var clock=new THREE.Clock();
@@ -1249,17 +1074,8 @@ function animate(){
   drawMinimap();
   var sx=0,sy=0;
   if(shake>0){shake-=dt;sx=(Math.random()-0.5)*shake*0.3;sy=(Math.random()-0.5)*shake*0.3;}
-  if(state==='menu'&&menuChar){
-    if(menuMixer)menuMixer.update(dt);
-    menuT+=dt;
-    var mAng=menuT*0.22,mR=3.8;
-    camera.position.set(Math.sin(mAng)*mR,1.35,Math.cos(mAng)*mR);
-    camera.lookAt(0,1.05,0);
-    menuChar.rotation.y=Math.atan2(camera.position.x-menuChar.position.x,camera.position.z-menuChar.position.z);
-  }else{
-    camera.rotation.y=yaw+sx;
-    camera.rotation.x=pitch+sy;
-  }
+  camera.rotation.y=yaw+sx;
+  camera.rotation.x=pitch+sy;
   renderer.render(scene,camera);
 }
 animate();
@@ -1269,6 +1085,3 @@ addEventListener('resize',function(){
   renderer.setSize(innerWidth,innerHeight);
 });
 })();
-</script>
-</body>
-</html>
