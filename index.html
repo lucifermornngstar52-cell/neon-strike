@@ -1086,6 +1086,15 @@ function updateHUD(){
       var de=enemies[di];
       s+=' '+de.type+'['+de.obj.position.x.toFixed(1)+','+de.obj.position.z.toFixed(1)+']'+(de.dead?'D':'');
     }
+    if(menuChar){
+      var mw=new THREE.Vector3();menuChar.getWorldPosition(mw);
+      s+=' MENU[pos'+mw.x.toFixed(2)+','+mw.y.toFixed(2)+','+mw.z.toFixed(2)+' rot'+menuChar.rotation.y.toFixed(2)+' vis'+menuChar.visible+']';
+      var iw=new THREE.Vector3();menuInner.getWorldPosition(iw);
+      s+=' INNER['+iw.x.toFixed(2)+','+iw.y.toFixed(2)+','+iw.z.toFixed(2)+']';
+      var hb=new THREE.Box3().setFromObject(menuInner);
+      if(hb.isEmpty())s+=' BBOX EMPTY';
+      else{var hs=hb.getSize(new THREE.Vector3());s+=' BBOX[h'+hs.y.toFixed(2)+']';}
+    }
     statsEl.textContent=s+' | f'+dbgFrames+' '+dbgErr;
   }
 }
