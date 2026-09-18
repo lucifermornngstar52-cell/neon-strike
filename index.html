@@ -1069,7 +1069,17 @@ function updateHUD(){
     bosswrap.style.display='block';
     bossfill.style.width=Math.max(0,bossRef.hp/bossRef.maxHp*100)+'%';
   }else bosswrap.style.display='none';
+  if(dbgMode){
+    var s='DBG p['+camera.position.x.toFixed(1)+','+camera.position.z.toFixed(1)+'] ';
+    for(var di=0;di<enemies.length;di++){
+      var de=enemies[di];
+      s+=' '+de.type+'['+de.obj.position.x.toFixed(1)+','+de.obj.position.z.toFixed(1)+']'+(de.dead?'D':'');
+    }
+    statsEl.textContent=s;
+  }
 }
+var dbgMode=(location.search.indexOf('dbg=1')>=0);
+var statsEl=$('stats');
 function updateFX(dt){
   for(var i=particles.length-1;i>=0;i--){
     var p=particles[i];
