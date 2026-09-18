@@ -683,7 +683,10 @@ function updatePlayer(dt){
   player.vel.copy(camera.position).sub(player.prevPos).multiplyScalar(1/Math.max(dt,0.001));
   player.prevPos.copy(camera.position);
 }
+var dbgErr='',dbgFrames=0;
 function updateEnemies(dt){
+try{
+  dbgFrames++;
   var mcount=0;
   for(var i=0;i<enemies.length;i++)if(enemies[i].minion&&!enemies[i].dead)mcount++;
   for(var i2=enemies.length-1;i2>=0;i2--){
@@ -781,6 +784,7 @@ function updateEnemies(dt){
       o.traverse(function(m){if(m.material&&m.material.emissive&&m.material.userData&&m.material.userData.baseEm){m.material.emissive.copy(m.material.userData.baseEm);m.material.emissiveIntensity=0.25;}});
     }
   }
+}catch(ex){dbgErr=String(ex)+' @'+(ex&&ex.stack?String(ex.stack).split('\n')[1]:'');}
 }
 // ══════════ СТРЕЛЬБА ══════════
 function switchWeapon(i,force){
@@ -1075,7 +1079,7 @@ function updateHUD(){
       var de=enemies[di];
       s+=' '+de.type+'['+de.obj.position.x.toFixed(1)+','+de.obj.position.z.toFixed(1)+']'+(de.dead?'D':'');
     }
-    statsEl.textContent=s;
+    statsEl.textContent=s+' | f'+dbgFrames+' '+dbgErr;
   }
 }
 var dbgMode=(location.search.indexOf('dbg=1')>=0);
