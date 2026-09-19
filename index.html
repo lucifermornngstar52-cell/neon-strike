@@ -9,6 +9,11 @@
 html,body{width:100%;height:100%;overflow:hidden;background:#050510;font-family:'Courier New',monospace;color:#cceeff;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #hud{position:fixed;inset:0;pointer-events:none;z-index:5}
 #cross{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);font-size:24px;color:#00ffcc;text-shadow:0 0 6px #00ffcc88;z-index:6;pointer-events:none}
+#scopeOv{display:none;position:fixed;inset:0;z-index:5;pointer-events:none}
+#scopeRing{position:absolute;left:50%;top:50%;width:min(62vmin,420px);height:min(62vmin,420px);transform:translate(-50%,-50%);border:2px solid rgba(0,255,204,.8);border-radius:50%;box-shadow:0 0 22px rgba(0,255,204,.35),inset 0 0 22px rgba(0,255,204,.18)}
+.scopeL{position:absolute;background:rgba(0,255,204,.65);box-shadow:0 0 8px rgba(0,255,204,.4)}
+#slH{left:calc(50% - min(31vmin,210px));top:50%;width:min(62vmin,420px);height:1px}
+#slV{top:calc(50% - min(31vmin,210px));left:50%;height:min(62vmin,420px);width:1px}
 #hitmark{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%) rotate(45deg);font-size:22px;color:#ffffff;opacity:0;z-index:6;pointer-events:none;font-weight:bold}
 #vign{position:fixed;inset:0;box-shadow:inset 0 0 140px 40px rgba(255,0,40,.85);opacity:0;z-index:6;pointer-events:none}
 #stats{position:fixed;top:14px;left:16px;font-size:14px;line-height:1.6;color:#8fd;text-shadow:0 0 4px #000}
@@ -67,6 +72,8 @@ body.editmode .tbtn,body.editmode #stick{outline:2px dashed #ffcc33;outline-offs
 #btnFire{right:26px;bottom:104px;width:92px;height:92px;font-size:15px;border-color:#ff336699;background:rgba(255,51,102,0.12);color:#ff5577}
 #btnJump{right:134px;bottom:170px;width:60px;height:60px}
 #btnReload{right:52px;bottom:212px;width:60px;height:60px}
+#btnAds{right:124px;bottom:104px;width:60px;height:60px;font-size:20px}
+#btnAds.on{border-color:#00ffcc;background:rgba(0,255,204,0.18);color:#00ffcc}
 #btnWeapon{left:26px;bottom:270px;width:66px;height:44px;border-radius:10px;font-size:11px}
 #btnPause{right:16px;top:12px;width:42px;height:42px;border-radius:10px}
 /* Мобильная раскладка: короткий landscape-вьюпорт требует компактного, неперекрывающегося HUD */
@@ -78,6 +85,7 @@ html.mobile #ammo{top:8px;right:108px;bottom:auto;font-size:20px}
 html.mobile #btnFire{right:14px;bottom:14px;width:70px;height:70px;font-size:13px}
 html.mobile #btnJump{right:96px;bottom:14px;width:48px;height:48px;font-size:16px}
 html.mobile #btnReload{right:14px;bottom:96px;width:48px;height:48px;font-size:16px}
+html.mobile #btnAds{right:78px;bottom:96px;width:48px;height:48px;font-size:18px}
 html.mobile #stick{left:14px;bottom:14px;width:110px;height:110px}
 html.mobile #hpwrap{bottom:14px;left:132px}
 html.mobile #feed{top:110px}
@@ -95,6 +103,7 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 <div id="feed"></div>
 <div id="bosswrap">БОСС<div id="bossbar"><div id="bossfill"></div></div></div>
 <div id="cross">+</div>
+<div id="scopeOv"><div id="scopeRing"></div><div class="scopeL" id="slH"></div><div class="scopeL" id="slV"></div></div>
 <div id="hitmark">+</div>
 <div id="vign"></div>
 <div id="banner"></div>
@@ -104,6 +113,7 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 <div id="btnFire" class="tbtn">ОГОНЬ</div>
 <div id="btnJump" class="tbtn">▲</div>
 <div id="btnReload" class="tbtn">⟳</div>
+<div id="btnAds" class="tbtn">◎</div>
 <div id="btnWeapon" class="tbtn">ОРУЖ</div>
 <div id="btnPause" class="tbtn">II</div>
 <div id="btnGear" class="tbtn">⚙</div>
@@ -147,7 +157,7 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 (function(){
 'use strict';
 var $=function(id){return document.getElementById(id);};
-var menu=$('menu'),pauseOv=$('pauseOv'),overOv=$('overOv');
+var menu=$('menu'),pauseOv=$('pauseOv'),overOv=$('overOv'),scopeEl=$('scopeOv');
 var scoreEl=$('score'),waveEl=$('wave'),leftEl=$('left'),killsEl=$('kills'),hsEl=$('hs');
 var hpTxt=$('hptxt'),hpFill=$('hpfill'),ammoEl=$('ammo');
 var banner=$('banner'),vign=$('vign'),hitmark=$('hitmark');
@@ -223,12 +233,28 @@ renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobile?1.5:2));
 renderer.setClearColor(0x050510);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x6a88aa,0x1a1a2c,1.6));
-var dl=new THREE.DirectionalLight(0x99aaff,0.9);
+scene.add(new THREE.HemisphereLight(0x6a88aa,0x1a1a2c,1.1));
+var dl=new THREE.DirectionalLight(0x99aaff,0.55);
 dl.position.set(25,45,15);scene.add(dl);
-var dl2=new THREE.DirectionalLight(0x6888cc,0.55); // подсветка с обратной стороны
+var dl2=new THREE.DirectionalLight(0x6888cc,0.35); // подсветка с обратной стороны
 dl2.position.set(-30,35,-25);scene.add(dl2);
-scene.add(new THREE.AmbientLight(0x22283a,0.55));
+scene.add(new THREE.AmbientLight(0x22283a,0.4));
+// ─ солнце: тёплый свет + видимый диск с гало ─
+var SUNDIR=new THREE.Vector3(90,55,-95);
+var sunLight=new THREE.DirectionalLight(0xffd0a0,1.15);
+sunLight.position.copy(SUNDIR);scene.add(sunLight);
+(function(){
+  var disk=new THREE.Mesh(new THREE.SphereGeometry(13,24,24),new THREE.MeshBasicMaterial({color:0xffeeaa,fog:false}));
+  disk.position.copy(SUNDIR).multiplyScalar(1.5);
+  var c=document.createElement('canvas');c.width=c.height=256;
+  var g=c.getContext('2d');var gr=g.createRadialGradient(128,128,0,128,128,128);
+  gr.addColorStop(0,'rgba(255,225,160,0.9)');gr.addColorStop(0.35,'rgba(255,195,120,0.35)');gr.addColorStop(1,'rgba(255,170,80,0)');
+  g.fillStyle=gr;g.fillRect(0,0,256,256);
+  var halo=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),fog:false,transparent:true,depthWrite:false}));
+  halo.scale.set(110,110,1);
+  disk.add(halo);
+  scene.add(disk);
+})();
 
 var floor=new THREE.Mesh(new THREE.PlaneGeometry(ARENA*2,ARENA*2),new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.95}));
 floor.rotation.x=-Math.PI/2;scene.add(floor);
@@ -735,7 +761,7 @@ function resetGame(){
   if(dW>=2&&dW<=4)switchWeapon(dW-1,true);
   score=0;kills=0;headshots=0;shotsFired=0;shotsHit=0;
   wave=0;spawnQueue=[];betweenT=2.0;bannerT=0;
-  reloading=0;shootCd=0;recoil=0;ads=false;
+  reloading=0;shootCd=0;recoil=0;ads=false;if(window.__adsBtnReset)window.__adsBtnReset();
   camera.position.set(0,1.7,0);yaw=0;pitch=0;vy=0;
   player.prevPos.set(0,1.7,0);
 }
@@ -975,6 +1001,8 @@ function updateWeapon(dt){
     }
   }
   var base=ads?ADSP:HIP;
+  gunRig.visible=!ads; // прицел сквозь мушку: оружие не должно перекрывать обзор
+  scopeEl.style.display=ads?'block':'none';
   gunRig.position.x+=(base.x-gunRig.position.x)*Math.min(1,dt*12);
   gunRig.position.y+=(base.y+Math.sin(bobT)*0.012+(raiseT>0?-raiseT*1.2:0)-gunRig.position.y)*Math.min(1,dt*12);
   recoil*=Math.exp(-13*dt);
@@ -1052,7 +1080,7 @@ var stickId=null,lookId=null,fireId=null,lookX=0,lookY=0;
 var stickCx=0,stickCy=0,stickMax=1;
 if(isMobile){
   var touchUI=$('touchUI'),stick=$('stick'),knob=$('stickKnob');
-  var btnFire=$('btnFire'),btnJump=$('btnJump'),btnReload=$('btnReload'),btnPause=$('btnPause'),btnWeapon=$('btnWeapon'),btnGear=$('btnGear'),btnDone=$('btnDone');
+  var btnFire=$('btnFire'),btnJump=$('btnJump'),btnReload=$('btnReload'),btnPause=$('btnPause'),btnWeapon=$('btnWeapon'),btnGear=$('btnGear'),btnDone=$('btnDone'),btnAds=$('btnAds');
   document.documentElement.classList.add('mobile');
   $('kbHelp').style.display='none';
   // подсказки управления в меню больше не показываем
@@ -1129,6 +1157,12 @@ if(isMobile){
   btnFire.addEventListener('pointercancel',stopFire,false);
   btnFire.addEventListener('pointerleave',stopFire,false);
   bindBtn(btnJump,function(){jumpReq=true;});
+  bindBtn(btnAds,function(){
+    if(state!=='playing')return;
+    ads=!ads;
+    btnAds.classList.toggle('on',ads);
+  });
+  window.__adsBtnReset=function(){btnAds.classList.remove('on');};
   bindBtn(btnReload,function(){if(state==='playing')startReload();});
   bindBtn(btnWeapon,function(){if(state==='playing')switchWeapon(curW+1);});
   bindBtn(btnPause,function(){
@@ -1140,13 +1174,13 @@ if(isMobile){
   });
 
   // ═══ КАСТОМИЗАЦИЯ: размер + перетаскивание кнопок ═══
-  var CTL_IDS=['stick','btnFire','btnJump','btnReload','btnWeapon','btnPause','btnGear'];
+  var CTL_IDS=['stick','btnFire','btnJump','btnReload','btnAds','btnWeapon','btnPause','btnGear'];
   var editMode=false, dragging=null;
   function getCtl(){
     try{return JSON.parse(localStorage.nsCtl||'{}');}catch(e){return {};}
   }
   function saveCtl(d){try{localStorage.nsCtl=JSON.stringify(d);}catch(e){}}
-  var CTL_LABELS={stick:'СТИК',btnFire:'ОГОНЬ',btnJump:'ПРЫЖ',btnReload:'⟳',btnWeapon:'ОРУЖ',btnPause:'II',btnGear:'⚙'};
+  var CTL_LABELS={stick:'СТИК',btnFire:'ОГОНЬ',btnJump:'ПРЫЖ',btnReload:'⟳',btnAds:'◎ ПРИЦЕЛ',btnWeapon:'ОРУЖ',btnPause:'II',btnGear:'⚙'};
   var ctlSel='all';
   function normCtl(d){
     if(!d)d={};
@@ -1500,6 +1534,7 @@ function buildMenuChar(){
   $('minimap').style.display='none';
   $('cross').style.display='none';
   $('feed').style.display='none';
+  scopeEl.style.display='none';
 }
 function killMenuChar(){
   if(menuChar){scene.remove(menuChar);menuChar=null;}
