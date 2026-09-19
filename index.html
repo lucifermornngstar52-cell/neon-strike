@@ -1432,9 +1432,10 @@ var gAssets={weapons:[null,null,null,null],robot:null,robotClips:null,city:{},sk
 
 // ══════════ МЕНЮ-ПЕРСОНАЖ (витрина) ══════════
 var CHARS=[
+ // face: компенсация разворота корня в анимации (у soldier клип Idle крутит корень на 180°)
  {key:'robot',  anim:'Idle', hand:'Hand.R',             wpPos:[0,0.10,0.02], wpRot:[1.57,0,0],   face:0, h:2.05},
- {key:'soldier',anim:'Idle', hand:'mixamorig:RightHand', wpPos:[0,0.12,0.03], wpRot:[1.57,0,1.57],face:0, h:2.05},
- {key:'xbot',   anim:'idle', hand:'mixamorig:RightHand', wpPos:[0,0.12,0.03], wpRot:[1.57,0,1.57],face:Math.PI, h:2.05}
+ {key:'soldier',anim:'Idle', hand:'mixamorig:RightHand', wpPos:[0,0.12,0.03], wpRot:[1.57,0,1.57],face:Math.PI, h:2.05},
+ {key:'xbot',   anim:'idle', hand:'mixamorig:RightHand', wpPos:[0,0.12,0.03], wpRot:[1.57,0,1.57],face:0, h:2.05}
 ];
 var menuChar=null,menuInner=null,menuMixer=null,menuT=0,menuWpn=-1,menuFace=0;
 function buildMenuChar(){
