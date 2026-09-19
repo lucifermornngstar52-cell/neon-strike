@@ -223,11 +223,12 @@ renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobile?1.5:2));
 renderer.setClearColor(0x050510);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x557799,0x141422,1.35));
-var dl=new THREE.DirectionalLight(0x99aaff,0.75);
+scene.add(new THREE.HemisphereLight(0x6a88aa,0x1a1a2c,1.6));
+var dl=new THREE.DirectionalLight(0x99aaff,0.9);
 dl.position.set(25,45,15);scene.add(dl);
-var dl2=new THREE.DirectionalLight(0x6888cc,0.4); // подсветка с обратной стороны
+var dl2=new THREE.DirectionalLight(0x6888cc,0.55); // подсветка с обратной стороны
 dl2.position.set(-30,35,-25);scene.add(dl2);
+scene.add(new THREE.AmbientLight(0x22283a,0.55));
 
 var floor=new THREE.Mesh(new THREE.PlaneGeometry(ARENA*2,ARENA*2),new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.95}));
 floor.rotation.x=-Math.PI/2;scene.add(floor);
@@ -1054,8 +1055,7 @@ if(isMobile){
   var btnFire=$('btnFire'),btnJump=$('btnJump'),btnReload=$('btnReload'),btnPause=$('btnPause'),btnWeapon=$('btnWeapon'),btnGear=$('btnGear'),btnDone=$('btnDone');
   document.documentElement.classList.add('mobile');
   $('kbHelp').style.display='none';
-  var note=$('mobileNote');note.style.display='block';
-  note.textContent='Стик слева — движение (до упора = спринт). Справа палец — камера. Кнопки: ОГОНЬ, прыжок, перезарядка, смена оружия. Оружие — кнопка ОРУЖ или тап по названию оружия справа внизу. ⚙ — настройки кнопок.';
+  // подсказки управления в меню больше не показываем
   function stickGeom(){
     var r=stick.getBoundingClientRect();
     stickCx=r.left+r.width/2;stickCy=r.top+r.height/2;stickMax=r.width/2-28;
