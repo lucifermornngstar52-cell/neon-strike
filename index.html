@@ -112,11 +112,7 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 <div class="ov" id="menu">
 <h1>NEON STRIKE</h1>
 <p class="sub" style="color:#8fd8ff">3D FPS · волны · боссы · лут</p>
-<div id="kbHelp">
-<p>ЛКМ — стрелять · ПКМ — прицел · WASD — движение · SHIFT — спринт · SPACE — прыжок</p>
-<p>1-4 — оружие · колесо — переключение · R — перезарядка · ESC — пауза</p>
-<p>Хедшот = двойной урон · HP регенится вне боя · собирай аптечки и патроны</p>
-</div>
+<div id="kbHelp" style="display:none"></div>
 <button class="btn" id="playBtn" disabled>СТАРТ</button>
 <p class="note" id="loadNote">ЗАГРУЗКА МОДЕЛЕЙ 0%</p>
 <p class="note" id="mobileNote" style="display:none"></p>
@@ -125,6 +121,7 @@ html.mobile .wslot{padding:1px 5px;font-size:10px;margin-left:3px}
 <h1>ПАУЗА</h1>
 <p>кликни, чтобы продолжить</p>
 <button class="btn" id="pauseSetBtn" style="display:none">НАСТРОЙКИ УПРАВЛЕНИЯ</button>
+<button class="btn" id="pauseExitBtn" style="border-color:#ff667788;color:#ff8888">ВЫЙТИ В МЕНЮ</button>
 </div>
 <div class="ov" id="setOv" style="display:none">
 <h1>НАСТРОЙКИ УПРАВЛЕНИЯ</h1>
@@ -226,9 +223,11 @@ renderer.setPixelRatio(Math.min(devicePixelRatio||1,isMobile?1.5:2));
 renderer.setClearColor(0x050510);
 document.body.appendChild(renderer.domElement);
 
-scene.add(new THREE.HemisphereLight(0x445577,0x0a0a12,0.95));
-var dl=new THREE.DirectionalLight(0x99aaff,0.45);
+scene.add(new THREE.HemisphereLight(0x557799,0x141422,1.35));
+var dl=new THREE.DirectionalLight(0x99aaff,0.75);
 dl.position.set(25,45,15);scene.add(dl);
+var dl2=new THREE.DirectionalLight(0x6888cc,0.4); // подсветка с обратной стороны
+dl2.position.set(-30,35,-25);scene.add(dl2);
 
 var floor=new THREE.Mesh(new THREE.PlaneGeometry(ARENA*2,ARENA*2),new THREE.MeshStandardMaterial({color:0xffffff,roughness:0.95}));
 floor.rotation.x=-Math.PI/2;scene.add(floor);
@@ -355,7 +354,7 @@ function buildCity(){
   for(var s2=0;s2<SKY.length;s2++){
     addBuildingModel(gAssets.sky[SKY_LIST[SKY[s2].i]].scene,Math.cos(SKY[s2].a)*72,Math.sin(SKY[s2].a)*72,SKY[s2].h,0,false,0x6677aa);
   }
-  scene.fog=new THREE.Fog(0x060612,55,150);
+  scene.fog=new THREE.Fog(0x0a0e1c,65,160);
 }
 function pointInCover(x,z,y){
   for(var i=0;i<covers.length;i++){
@@ -1029,6 +1028,17 @@ pauseOv.addEventListener('click',function(){
   if(isMobile){pauseOv.style.display='none';if(state==='paused')state='playing';}
   else lock();
 });
+$('pauseExitBtn').addEventListener('click',function(ev){
+  ev.stopPropagation();
+  pauseOv.style.display='none';
+  $('setOv').style.display='none';
+  resetGame();
+  state='menu';
+  menu.style.display='flex';
+  if(isMobile)$('touchUI').classList.remove('on');
+  buildMenuChar();
+  if(!isMobile&&document.exitPointerLock)document.exitPointerLock();
+},false);
 renderer.domElement.addEventListener('click',function(){
   if(state==='playing'&&!isMobile&&document.pointerLockElement!==renderer.domElement)lock();
 });
