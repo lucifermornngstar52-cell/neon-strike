@@ -1,0 +1,120 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NANO-GPT 50M</title><style>
+body{margin:0;background:#0b0e14;color:#cfe;font-family:system-ui,sans-serif}
+#chat{max-width:640px;margin:0 auto;padding:12px;height:calc(100vh - 90px);overflow-y:auto}
+.m{padding:10px 14px;border-radius:14px;margin:8px 0;max-width:85%;white-space:pre-wrap;line-height:1.4}
+.u{background:#1c2b4a;margin-left:auto}.n{background:#152c2a;margin-right:auto}
+.hdr{padding:10px;text-align:center;color:#4fd;font-size:14px}
+#inp{position:fixed;bottom:0;left:0;right:0;display:flex;gap:8px;padding:10px;background:#0b0e14}
+#inp input{flex:1;background:#141a26;color:#cfe;border:1px solid #234;border-radius:10px;padding:12px;font-size:16px}
+#inp button{background:#0a5;border:0;color:#021;padding:0 18px;border-radius:10px;font-size:16px}
+#load{padding:40px;text-align:center;color:#4fd}
+</style></head><body>
+<div class="hdr">NANO-GPT 50M — 49.6M параметров, обучена с нуля, int8</div>
+<div id="chat"><div id="load">загружаю мозги (~50 МБ)... подожди</div></div>
+<div id="inp"><input id="q" placeholder="напиши что-нибудь..." autocomplete="off" disabled><button onclick="send()" disabled>➤</button></div>
+<script>
+const CFG={V:398,D:640,L:10,H:10,hs:64,T:256};
+// NANO-GPT inference engine (JS port of nanogpt.py, forward-only)
+function f32(b64){const bin=atob(b64);const n=bin.length;const u=new Uint8Array(n);
+for(let i=0;i<n;i++)u[i]=bin.charCodeAt(i);
+return new Float32Array(u.buffer.slice(0));}
+function mm(A,B,m,k){const n=A.length,out=[];for(let i=0;i<n;i++){const oi=new Float32Array(k),ai=A[i];
+for(let j=0;j<m;j++){const a=ai[j];if(a===0)continue;const bj=j*k;
+for(let c=0;c<k;c++)oi[c]+=a*B[bj+c];}out.push(oi);}return out;}
+function mmT(A,Bflat,n,m,k){ // A: rows(n,m) @ Bflat(k,m)^T -> rows(n,k)
+const out=[];for(let i=0;i<n;i++){const oi=new Float32Array(k),ai=A[i];
+for(let v=0;v<k;v++){let s=0;const bv=v*m;for(let d=0;d<m;d++)s+=ai[d]*Bflat[bv+d];oi[v]=s;}out.push(oi);}return out;}
+function ln(rows,g,b){const n=rows.length,D=g.length,xh=[],inv=[];
+for(let i=0;i<n;i++){const r=rows[i];let mu=0;for(let d=0;d<D;d++)mu+=r[d];mu/=D;
+let vr=0;for(let d=0;d<D;d++){const t=r[d]-mu;vr+=t*t;}vr/=D;const iv=1/Math.sqrt(vr+1e-5);
+const x=new Float32Array(D);for(let d=0;d<D;d++)x[d]=(r[d]-mu)*iv;
+for(let d=0;d<D;d++)x[d]=x[d]*g[d]+b[d];xh.push(x);inv.push(iv);}return[xh,inv];}
+function lnBwdNotNeeded(){}
+function gelu(x){return 0.5*x*(1+Math.tanh(0.7978845608*(x+0.044715*x*x*x)));}
+function softmaxRow(r){const n=r.length;let mx=-1e30;for(let i=0;i<n;i++)if(r[i]>mx)mx=r[i];
+let s=0;const e=new Float32Array(n);for(let i=0;i<n;i++){e[i]=Math.exp(r[i]-mx);s+=e[i];}
+for(let i=0;i<n;i++)e[i]/=s;return e;}
+
+function mkEngine(W,cfg){
+  const {V,D,L,H,hs,T}=cfg; const P={};
+  for(const k in W){if(!W[k].b)continue;
+  if(W[k].q){const bin=atob(W[k].b),n=bin.length,u8=new Uint8Array(n);
+    for(let i=0;i<n;i++)u8[i]=bin.charCodeAt(i);
+    const i8=new Int8Array(u8.buffer),sc=W[k].sc,out=new Float32Array(n);
+    for(let i=0;i<n;i++)out[i]=i8[i]*sc;
+    P[k]={a:out,s:W[k].s};}
+  else P[k]={a:f32(W[k].b),s:W[k].s};}
+  const vocab=W.__vocab, stoi={};vocab.forEach((c,i)=>stoi[c]=i);
+  function forward(ids){
+    const t=Math.min(ids.length,T),off=ids.length-t;
+    let x=[]; // (t,D)
+    for(let i=0;i<t;i++){const id=ids[off+i];const r=new Float32Array(D);
+      const we=P.we.a;const pe=P.wpe.a;
+      for(let d=0;d<D;d++)r[d]=we[id*D+d]+pe[i*D+d];x.push(r);}
+    for(let l=0;l<L;l++){
+      const p=k=>P[l+k].a;
+      let[h1]=ln(x,p('ln1g'),p('ln1b'));
+      const q=mm(h1,p('q'),D,D),k2=mm(h1,p('k'),D,D),v=mm(h1,p('v'),D,D);
+      const o=new Array(t);
+      for(let i=0;i<t;i++)o[i]=new Float32Array(D);
+      const sc=1/Math.sqrt(hs);
+      for(let h=0;h<H;h++){
+        const ho=h*hs;
+        for(let i=0;i<t;i++){const att=new Float32Array(t).fill(-1e10);
+          for(let j=0;j<=i;j++){let s=0;const qi=q[i],kj=k2[j];
+            for(let d=0;d<hs;d++)s+=qi[ho+d]*kj[ho+d];
+            att[j]=s*sc;}
+          const a=softmaxRow(att);
+          const oi=o[i];
+          for(let j=0;j<=i;j++){const w=a[j],vj=v[j];
+            for(let d=0;d<hs;d++)oi[ho+d]+=w*vj[ho+d];}}
+      }
+      const oo=mm(o,p('o'),D,D);
+      for(let i=0;i<t;i++){const xi=x[i],oi=oo[i];for(let d=0;d<D;d++)xi[d]+=oi[d];}
+      let[h2]=ln(x,p('ln2g'),p('ln2b'));
+      const pre=mm(h2,p('fc'),D,4*D),act=pre.map(r=>r.map(gelu));
+      const m2=mm(act,p('fc2'),4*D,D);
+      for(let i=0;i<t;i++){const xi=x[i],mi=m2[i];for(let d=0;d<D;d++)xi[d]+=mi[d];}
+    }
+    let[xf]=ln(x,P.lnfg.a,P.lnfb.a);
+    const logits=mmT(xf,P.we.a,t,D,V); // rows t, V
+    return logits;
+  }
+  function generate(prompt,n,temp,topk){
+    const ids=[];for(const ch of prompt)ids.push(stoi[ch]!==undefined?stoi[ch]:0);
+    let out='';
+    for(let s=0;s<n;s++){
+      const lg=forward(ids)[Math.min(ids.length,T)-1];
+      const arr=Array.from(lg);const mx=Math.max(...arr);
+      const pr=arr.map((v,i)=>[Math.exp((v-mx)/temp),i]).sort((a,b)=>b[0]-a[0]).slice(0,topk);
+      let sum=0;for(const p of pr)sum+=p[0];
+      let r=Math.random()*sum,ci=pr[pr.length-1][1];
+      for(const p of pr){r-=p[0];if(r<=0){ci=p[1];break;}}
+      ids.push(ci);out+=vocab[ci];
+      if(out.endsWith('\n\n'))break;
+    }
+    return out;
+  }
+  return {forward,generate};
+}
+
+
+const chat=document.getElementById('chat');let hist='';
+function add(cls,txt){const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+let model=null;
+fetch('w50.json').then(r=>r.json()).then(W=>{
+  model=mkEngine(W.W,CFG);
+  document.getElementById('load').remove();
+  document.getElementById('q').disabled=false;
+  document.querySelector('#inp button').disabled=false;
+  add('n','привет! я нано-гпт на 49.6 млн параметров, обучена с нуля. спроси: как дела, кто ты, расскажи о себе...');
+}).catch(e=>add('n','не загрузилось: '+e));
+function send(){const inp=document.getElementById('q'),q=inp.value.trim().toLowerCase();if(!q||!model)return;
+add('u',q);inp.value='';
+const think=add('n','...думаю...');
+setTimeout(()=>{const ans=model.generate(hist+'В: '+q+'\nО:',50,0.7,5).split('\n')[0].trim();
+think.textContent=ans||'...';hist+='В: '+q+'\nО: '+ans+'\n\n';},50);}
+document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+</script></body></html>
