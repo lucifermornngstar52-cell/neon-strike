@@ -41,7 +41,7 @@ for(let i=0;i<n;i++)e[i]/=s;return e;}
 
 function mkEngine(W,cfg){
   const {V,D,L,H,hs,T}=cfg; const P={};
-  for(const k in W){if(!W[k].b)continue;P[k]={a:f32(W[k].b),s:W[k].s};}
+  for(const k in W){if(k==='__vocab')continue;P[k]=W[k];}
   const vocab=W.__vocab, stoi={};vocab.forEach((c,i)=>stoi[c]=i);
   function forward(ids){
     const t=Math.min(ids.length,T),off=ids.length-t;
@@ -96,6 +96,54 @@ function mkEngine(W,cfg){
   return {forward,generate};
 }
 
+
+function mkCached(W,cfg){
+  const {V,D,L,H,hs,T}=cfg;
+  const P={};for(const k in W){if(k==='__vocab')continue;P[k]=W[k].a;}
+  const vocab=W.__vocab,stoi={};vocab.forEach((c,i)=>stoi[c]=i);
+  const st={K:[],V:[],pos:0};
+  function ln1x(x,g,b){const D=g.length;let mu=0;for(let d=0;d<D;d++)mu+=x[d];mu/=D;
+    let vr=0;for(let d=0;d<D;d++){const t=x[d]-mu;vr+=t*t;}vr/=D;const iv=1/Math.sqrt(vr+1e-5);
+    const o=new Float32Array(D);for(let d=0;d<D;d++)o[d]=(x[d]-mu)*iv*g[d]+b[d];return o;}
+  function mm1(x,B,m,k){const o=new Float32Array(k);for(let j=0;j<m;j++){const a=x[j];if(a===0)continue;const bj=j*k;for(let c=0;c<k;c++)o[c]+=a*B[bj+c];}return o;}
+  function step(id){
+    const we=P.we,pe=P.wpe;
+    const x=new Float32Array(D);
+    for(let d=0;d<D;d++)x[d]=we[id*D+d]+pe[st.pos*D+d];
+    for(let l=0;l<L;l++){
+      const g=k=>P[l+k];
+      const h1=ln1x(x,g('ln1g'),g('ln1b'));
+      const q=mm1(h1,g('q'),D,D),k2=mm1(h1,g('k'),D,D),v=mm1(h1,g('v'),D,D);
+      if(!st.K[l]){st.K[l]=[];st.V[l]=[];}
+      st.K[l].push(k2);st.V[l].push(v);
+      const n=st.K[l].length,sc=1/Math.sqrt(hs);
+      const o=new Float32Array(D);
+      for(let h=0;h<H;h++){
+        const ho=h*hs;
+        const att=new Float32Array(n);let mx=-1e30;
+        for(let j=0;j<n;j++){let s=0;const kj=st.K[l][j];for(let d=0;d<hs;d++)s+=q[ho+d]*kj[ho+d];att[j]=s*sc;if(att[j]>mx)mx=att[j];}
+        let sum=0;for(let j=0;j<n;j++){att[j]=Math.exp(att[j]-mx);sum+=att[j];}
+        for(let j=0;j<n;j++){const w=att[j]/sum,vj=st.V[l][j];for(let d=0;d<hs;d++)o[ho+d]+=w*vj[ho+d];}
+      }
+      const oo=mm1(o,g('o'),D,D);
+      for(let d=0;d<D;d++)x[d]+=oo[d];
+      const h2=ln1x(x,g('ln2g'),g('ln2b'));
+      const pre=mm1(h2,g('fc'),D,4*D),act=new Float32Array(4*D);
+      for(let d=0;d<4*D;d++)act[d]=gelu(pre[d]);
+      const m2=mm1(act,g('fc2'),4*D,D);
+      for(let d=0;d<D;d++)x[d]+=m2[d];
+    }
+    st.pos++;if(st.pos>=T)throw new Error('ctx');
+    const xf=ln1x(x,P.lnfg,P.lnfb);
+    const lg=new Float32Array(V);
+    for(let v2=0;v2<V;v2++){let s=0;const bv=v2*D;for(let d=0;d<D;d++)s+=xf[d]*we[bv+d];lg[v2]=s;}
+    return lg;
+  }
+  function reset(){st.K=[];st.V=[];st.pos=0;}
+  function start(ids){reset();let lg=null;for(const id of ids)lg=step(id);return lg;}
+  return {step,start,reset,stoi,vocab};
+}
+
 const chat=document.getElementById('chat');let hist='',busy=false;
 function add(cls,txt){const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d;}
 let model=null;
@@ -108,7 +156,8 @@ Promise.all([fetch('w150_0.bin').then(r=>r.arrayBuffer()),fetch('w150_1.bin').th
     for(let i=0;i<m.n;i++)a[i]=i8[i]*m.sc;
     W[k]={a,s:m.s};}
   W.__vocab=MAN.__vocab;
-  model=mkEngine(W,CFG);
+  model=mkCached(W,CFG);
+  document.getElementById('load').remove();
   document.getElementById('load').remove();
   document.getElementById('q').disabled=false;
   document.querySelector('#inp button').disabled=false;
@@ -117,18 +166,17 @@ Promise.all([fetch('w150_0.bin').then(r=>r.arrayBuffer()),fetch('w150_1.bin').th
 function send(){const inp=document.getElementById('q'),q=inp.value.trim();if(!q||!model||busy)return;
 add('u',q);inp.value='';busy=true;
 const think=add('n','');think.classList.add('caret');
-const sto={};MAN.__vocab.forEach((c,i)=>sto[c]=i);
-const ids=[];for(const ch of (hist+'В: '+q+'\nО:'))ids.push(sto[ch]!==undefined?sto[ch]:0);
-let out='';
+const ids=[];for(const ch of (hist+'В: '+q+'\nО:'))ids.push(model.stoi[ch]!==undefined?model.stoi[ch]:0);
+let out='',lg;
+try{lg=model.start(ids);}catch(e){finish();return;}
 (function step(){
-  if(out.endsWith('\n\n')||out.length>=140||ids.length>=CFG.T){finish();return;}
-  const lg=model.forward(ids)[Math.min(ids.length,CFG.T)-1];
+  if(out.endsWith('\n\n')||out.length>=140||model.st.pos>=CFG.T){finish();return;}
   const arr=Array.from(lg),mx=Math.max(...arr);
   const pr=arr.map((v,i)=>[Math.exp((v-mx)/0.6),i]).sort((a,b)=>b[0]-a[0]).slice(0,6);
   let sum=0;for(const p of pr)sum+=p[0];
   let r=Math.random()*sum,ci=pr[pr.length-1][1];
   for(const p of pr){r-=p[0];if(r<=0){ci=p[1];break;}}
-  ids.push(ci);out+=MAN.__vocab[ci];
+  out+=MAN.__vocab[ci];lg=model.step(ci);
   think.textContent=out.replace(/\n+$/,'');
   chat.scrollTop=chat.scrollHeight;
   setTimeout(step,0);
