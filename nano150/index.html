@@ -1,0 +1,143 @@
+<!DOCTYPE html><html lang="ru"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>NANO-GPT 150M</title><style>
+body{margin:0;background:#0b0e14;color:#cfe;font-family:system-ui,sans-serif}
+#chat{max-width:640px;margin:0 auto;padding:12px;height:calc(100vh - 90px);overflow-y:auto}
+.m{padding:10px 14px;border-radius:14px;margin:8px 0;max-width:85%;white-space:pre-wrap;line-height:1.4}
+.u{background:#1c2b4a;margin-left:auto}.n{background:#152c2a;margin-right:auto}
+.hdr{padding:10px;text-align:center;color:#4fd;font-size:14px}
+#inp{position:fixed;bottom:0;left:0;right:0;display:flex;gap:8px;padding:10px;background:#0b0e14}
+#inp input{flex:1;background:#141a26;color:#cfe;border:1px solid #234;border-radius:10px;padding:12px;font-size:16px}
+#inp button{background:#0a5;border:0;color:#021;padding:0 18px;border-radius:10px;font-size:16px}
+#load{padding:40px;text-align:center;color:#4fd}
+.caret::after{content:"▌";animation:bl 1s steps(2) infinite}@keyframes bl{50%{opacity:0}}
+</style></head><body>
+<div class="hdr">NANO-GPT 150M — 151.8M параметров, мультидиалоговый корпус, int8</div>
+<div id="chat"><div id="load">загружаю мозги (~150 МБ, на телефоне может быть тяжело)... подожди</div></div>
+<div id="inp"><input id="q" placeholder="напиши что-нибудь..." autocomplete="off" disabled><button onclick="send()" disabled>➤</button></div>
+<script>
+const CFG={V:277,D:1024,L:12,H:16,hs:64,T:512};
+const MAN={"we":{"s":[277,1024],"sc":0.00950316246598959,"o":0,"n":283648},"wpe":{"s":[512,1024],"sc":0.0022694214712828398,"o":283648,"n":524288},"lnfg":{"s":[1024],"sc":0.009174507111310959,"o":807936,"n":1024},"lnfb":{"s":[1024],"sc":0.0053022755309939384,"o":808960,"n":1024},"0q":{"s":[1024,1024],"sc":0.001519927172921598,"o":809984,"n":1048576},"0k":{"s":[1024,1024],"sc":0.0015542061300948262,"o":1858560,"n":1048576},"0v":{"s":[1024,1024],"sc":0.0019104697275906801,"o":2907136,"n":1048576},"0o":{"s":[1024,1024],"sc":0.005095853935927153,"o":3955712,"n":1048576},"0fc":{"s":[1024,4096],"sc":0.001967000076547265,"o":5004288,"n":4194304},"0fc2":{"s":[4096,1024],"sc":0.005483714863657951,"o":9198592,"n":4194304},"0ln1g":{"s":[1024],"sc":0.007688612677156925,"o":13392896,"n":1024},"0ln1b":{"s":[1024],"sc":0.0016623118426650763,"o":13393920,"n":1024},"0ln2g":{"s":[1024],"sc":0.008343149907886982,"o":13394944,"n":1024},"0ln2b":{"s":[1024],"sc":0.0021645082160830498,"o":13395968,"n":1024},"1q":{"s":[1024,1024],"sc":0.0017321306513622403,"o":13396992,"n":1048576},"1k":{"s":[1024,1024],"sc":0.0030427470337599516,"o":14445568,"n":1048576},"1v":{"s":[1024,1024],"sc":0.001477644662372768,"o":15494144,"n":1048576},"1o":{"s":[1024,1024],"sc":0.002102926606312394,"o":16542720,"n":1048576},"1fc":{"s":[1024,4096],"sc":0.0021178596653044224,"o":17591296,"n":4194304},"1fc2":{"s":[4096,1024],"sc":0.005395379848778248,"o":21785600,"n":4194304},"1ln1g":{"s":[1024],"sc":0.007924889214336872,"o":25979904,"n":1024},"1ln1b":{"s":[1024],"sc":0.004923540633171797,"o":25980928,"n":1024},"1ln2g":{"s":[1024],"sc":0.009657149203121662,"o":25981952,"n":1024},"1ln2b":{"s":[1024],"sc":0.0017045342829078436,"o":25982976,"n":1024},"2q":{"s":[1024,1024],"sc":0.001631456078030169,"o":25984000,"n":1048576},"2k":{"s":[1024,1024],"sc":0.0023557450622320175,"o":27032576,"n":1048576},"2v":{"s":[1024,1024],"sc":0.0015782996779307723,"o":28081152,"n":1048576},"2o":{"s":[1024,1024],"sc":0.0026047956198453903,"o":29129728,"n":1048576},"2fc":{"s":[1024,4096],"sc":0.002204112708568573,"o":30178304,"n":4194304},"2fc2":{"s":[4096,1024],"sc":0.005170557647943497,"o":34372608,"n":4194304},"2ln1g":{"s":[1024],"sc":0.0074351150542497635,"o":38566912,"n":1024},"2ln1b":{"s":[1024],"sc":0.0047081876546144485,"o":38567936,"n":1024},"2ln2g":{"s":[1024],"sc":0.010871685110032558,"o":38568960,"n":1024},"2ln2b":{"s":[1024],"sc":0.002346721710637212,"o":38569984,"n":1024},"3q":{"s":[1024,1024],"sc":0.0014649082440882921,"o":38571008,"n":1048576},"3k":{"s":[1024,1024],"sc":0.002460485091432929,"o":39619584,"n":1048576},"3v":{"s":[1024,1024],"sc":0.00224520661868155,"o":40668160,"n":1048576},"3o":{"s":[1024,1024],"sc":0.003968716599047184,"o":41716736,"n":1048576},"3fc":{"s":[1024,4096],"sc":0.002325560664758086,"o":42765312,"n":4194304},"3fc2":{"s":[4096,1024],"sc":0.005154205020517111,"o":46959616,"n":4194304},"3ln1g":{"s":[1024],"sc":0.008031696081161499,"o":51153920,"n":1024},"3ln1b":{"s":[1024],"sc":0.0048050289042294025,"o":51154944,"n":1024},"3ln2g":{"s":[1024],"sc":0.010363821871578693,"o":51155968,"n":1024},"3ln2b":{"s":[1024],"sc":0.002447198610752821,"o":51156992,"n":1024},"4q":{"s":[1024,1024],"sc":0.002479356713593006,"o":51158016,"n":1048576},"4k":{"s":[1024,1024],"sc":0.003174430225044489,"o":52206592,"n":1048576},"4v":{"s":[1024,1024],"sc":0.002859224798157811,"o":53255168,"n":1048576},"4o":{"s":[1024,1024],"sc":0.004223310388624668,"o":54303744,"n":1048576},"4fc":{"s":[1024,4096],"sc":0.0022822562605142593,"o":55352320,"n":4194304},"4fc2":{"s":[4096,1024],"sc":0.004722405690699816,"o":59546624,"n":4194304},"4ln1g":{"s":[1024],"sc":0.009710276499390602,"o":63740928,"n":1024},"4ln1b":{"s":[1024],"sc":0.004074506461620331,"o":63741952,"n":1024},"4ln2g":{"s":[1024],"sc":0.010081129148602486,"o":63742976,"n":1024},"4ln2b":{"s":[1024],"sc":0.001770030241459608,"o":63744000,"n":1024},"5q":{"s":[1024,1024],"sc":0.002916554221883416,"o":63745024,"n":1048576},"5k":{"s":[1024,1024],"sc":0.0031787275802344084,"o":64793600,"n":1048576},"5v":{"s":[1024,1024],"sc":0.0027979544829577208,"o":65842176,"n":1048576},"5o":{"s":[1024,1024],"sc":0.004134743008762598,"o":66890752,"n":1048576},"5fc":{"s":[1024,4096],"sc":0.002601520624011755,"o":67939328,"n":4194304},"5fc2":{"s":[4096,1024],"sc":0.003616421716287732,"o":72133632,"n":4194304},"5ln1g":{"s":[1024],"sc":0.010409008711576462,"o":76327936,"n":1024},"5ln1b":{"s":[1024],"sc":0.0034233133774250746,"o":76328960,"n":1024},"5ln2g":{"s":[1024],"sc":0.010191308334469795,"o":76329984,"n":1024},"5ln2b":{"s":[1024],"sc":0.00309162400662899,"o":76331008,"n":1024},"6q":{"s":[1024,1024],"sc":0.0017871980089694262,"o":76332032,"n":1048576},"6k":{"s":[1024,1024],"sc":0.003268640022724867,"o":77380608,"n":1048576},"6v":{"s":[1024,1024],"sc":0.0018663661321625113,"o":78429184,"n":1048576},"6o":{"s":[1024,1024],"sc":0.0017251750687137246,"o":79477760,"n":1048576},"6fc":{"s":[1024,4096],"sc":0.002056302037090063,"o":80526336,"n":4194304},"6fc2":{"s":[4096,1024],"sc":0.004006966017186642,"o":84720640,"n":4194304},"6ln1g":{"s":[1024],"sc":0.01111568883061409,"o":88914944,"n":1024},"6ln1b":{"s":[1024],"sc":0.004528318997472525,"o":88915968,"n":1024},"6ln2g":{"s":[1024],"sc":0.010283121839165688,"o":88916992,"n":1024},"6ln2b":{"s":[1024],"sc":0.0024133576080203056,"o":88918016,"n":1024},"7q":{"s":[1024,1024],"sc":0.0018648799741640687,"o":88919040,"n":1048576},"7k":{"s":[1024,1024],"sc":0.0032478647772222757,"o":89967616,"n":1048576},"7v":{"s":[1024,1024],"sc":0.00195935252122581,"o":91016192,"n":1048576},"7o":{"s":[1024,1024],"sc":0.0016716894460842013,"o":92064768,"n":1048576},"7fc":{"s":[1024,4096],"sc":0.0021824368741363287,"o":93113344,"n":4194304},"7fc2":{"s":[4096,1024],"sc":0.004084697924554348,"o":97307648,"n":4194304},"7ln1g":{"s":[1024],"sc":0.011158826760947704,"o":101501952,"n":1024},"7ln1b":{"s":[1024],"sc":0.004489329177886248,"o":101502976,"n":1024},"7ln2g":{"s":[1024],"sc":0.00991074275225401,"o":101504000,"n":1024},"7ln2b":{"s":[1024],"sc":0.0017109356122091413,"o":101505024,"n":1024},"8q":{"s":[1024,1024],"sc":0.0018134011188521981,"o":101506048,"n":1048576},"8k":{"s":[1024,1024],"sc":0.003616536036133766,"o":102554624,"n":1048576},"8v":{"s":[1024,1024],"sc":0.0019421859178692102,"o":103603200,"n":1048576},"8o":{"s":[1024,1024],"sc":0.002254054183140397,"o":104651776,"n":1048576},"8fc":{"s":[1024,4096],"sc":0.0021132798865437508,"o":105700352,"n":4194304},"8fc2":{"s":[4096,1024],"sc":0.004566643852740526,"o":109894656,"n":4194304},"8ln1g":{"s":[1024],"sc":0.010935114696621895,"o":114088960,"n":1024},"8ln1b":{"s":[1024],"sc":0.004565649200230837,"o":114089984,"n":1024},"8ln2g":{"s":[1024],"sc":0.009853588417172432,"o":114091008,"n":1024},"8ln2b":{"s":[1024],"sc":0.0016850348329171538,"o":114092032,"n":1024},"9q":{"s":[1024,1024],"sc":0.0016699163243174553,"o":114093056,"n":1048576},"9k":{"s":[1024,1024],"sc":0.003278310876339674,"o":115141632,"n":1048576},"9v":{"s":[1024,1024],"sc":0.002926845336332917,"o":116190208,"n":1048576},"9o":{"s":[1024,1024],"sc":0.0026392515283077955,"o":117238784,"n":1048576},"9fc":{"s":[1024,4096],"sc":0.002188527025282383,"o":118287360,"n":4194304},"9fc2":{"s":[4096,1024],"sc":0.004496210720390081,"o":122481664,"n":4194304},"9ln1g":{"s":[1024],"sc":0.008963434025645256,"o":126675968,"n":1024},"9ln1b":{"s":[1024],"sc":0.00396742345765233,"o":126676992,"n":1024},"9ln2g":{"s":[1024],"sc":0.009873989969491959,"o":126678016,"n":1024},"9ln2b":{"s":[1024],"sc":0.0016064363298937678,"o":126679040,"n":1024},"10q":{"s":[1024,1024],"sc":0.0017623488092795014,"o":126680064,"n":1048576},"10k":{"s":[1024,1024],"sc":0.0032661701552569866,"o":127728640,"n":1048576},"10v":{"s":[1024,1024],"sc":0.0020175876561552286,"o":128777216,"n":1048576},"10o":{"s":[1024,1024],"sc":0.0030688343103975058,"o":129825792,"n":1048576},"10fc":{"s":[1024,4096],"sc":0.0021686614491045475,"o":130874368,"n":4194304},"10fc2":{"s":[4096,1024],"sc":0.004754931665956974,"o":135068672,"n":4194304},"10ln1g":{"s":[1024],"sc":0.00810974184423685,"o":139262976,"n":1024},"10ln1b":{"s":[1024],"sc":0.004879182670265436,"o":139264000,"n":1024},"10ln2g":{"s":[1024],"sc":0.009405726566910744,"o":139265024,"n":1024},"10ln2b":{"s":[1024],"sc":0.00154807697981596,"o":139266048,"n":1024},"11q":{"s":[1024,1024],"sc":0.002001289976760745,"o":139267072,"n":1048576},"11k":{"s":[1024,1024],"sc":0.004127859603613615,"o":140315648,"n":1048576},"11v":{"s":[1024,1024],"sc":0.0020627768244594336,"o":141364224,"n":1048576},"11o":{"s":[1024,1024],"sc":0.0049492535181343555,"o":142412800,"n":1048576},"11fc":{"s":[1024,4096],"sc":0.002319636521860957,"o":143461376,"n":4194304},"11fc2":{"s":[4096,1024],"sc":0.007043835241347551,"o":147655680,"n":4194304},"11ln1g":{"s":[1024],"sc":0.008181610144674778,"o":151849984,"n":1024},"11ln1b":{"s":[1024],"sc":0.004595687612891197,"o":151851008,"n":1024},"11ln2g":{"s":[1024],"sc":0.008972378447651863,"o":151852032,"n":1024},"11ln2b":{"s":[1024],"sc":0.0017416506307199597,"o":151853056,"n":1024},"__vocab":["\t","\n"," ","!","\"","#","$","%","&","'","(",")","*","+",",","-",".","/","0","1","2","3","4","5","6","7","8","9",":",";","<","=",">","?","@","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z","[","\\","]","^","_","`","a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","{","|","}","~"," ","¡","«","¯","°","±","²","·","»","×","à","ä","å","é","ë","î","ó","ö","ø","ü","ǝ","ɐ","ɯ","́","̄","̏","̓","̴","̵","̶","̷","̸","̾","̿","̈́","͝","Δ","α","β","ε","λ","μ","π","σ","φ","χ","ω","Ё","А","Б","В","Г","Д","Е","Ж","З","И","Й","К","Л","М","Н","О","П","Р","С","Т","У","Ф","Х","Ц","Ч","Ш","Щ","Ы","Ь","Э","Ю","Я","а","б","в","г","д","е","ж","з","и","й","к","л","м","н","о","п","р","с","т","у","ф","х","ц","ч","ш","щ","ъ","ы","ь","э","ю","я","ё","є","і","ї","ا","ل","ي","ᴀ","​","‍","–","—","’","“","”","•","…","₀","₁","₂","№","↑","→","↓","−","√","∞","∫","≈","≤","─","━","│","└","├","═","║","╨","█","░","▫","♂","♙","♟","♡","♥","♪","✨","❤","⠀","⣿","⧫","️","﻿","𝓮","🌸","🐾","👨","👩","😁","😂","😄","😅","😊","😢","😭","🙂","🤣","🧑"]};
+// NANO-GPT inference engine (JS port of nanogpt.py, forward-only)
+function f32(b64){const bin=atob(b64);const n=bin.length;const u=new Uint8Array(n);
+for(let i=0;i<n;i++)u[i]=bin.charCodeAt(i);
+return new Float32Array(u.buffer.slice(0));}
+function mm(A,B,m,k){const n=A.length,out=[];for(let i=0;i<n;i++){const oi=new Float32Array(k),ai=A[i];
+for(let j=0;j<m;j++){const a=ai[j];if(a===0)continue;const bj=j*k;
+for(let c=0;c<k;c++)oi[c]+=a*B[bj+c];}out.push(oi);}return out;}
+function mmT(A,Bflat,n,m,k){ // A: rows(n,m) @ Bflat(k,m)^T -> rows(n,k)
+const out=[];for(let i=0;i<n;i++){const oi=new Float32Array(k),ai=A[i];
+for(let v=0;v<k;v++){let s=0;const bv=v*m;for(let d=0;d<m;d++)s+=ai[d]*Bflat[bv+d];oi[v]=s;}out.push(oi);}return out;}
+function ln(rows,g,b){const n=rows.length,D=g.length,xh=[],inv=[];
+for(let i=0;i<n;i++){const r=rows[i];let mu=0;for(let d=0;d<D;d++)mu+=r[d];mu/=D;
+let vr=0;for(let d=0;d<D;d++){const t=r[d]-mu;vr+=t*t;}vr/=D;const iv=1/Math.sqrt(vr+1e-5);
+const x=new Float32Array(D);for(let d=0;d<D;d++)x[d]=(r[d]-mu)*iv;
+for(let d=0;d<D;d++)x[d]=x[d]*g[d]+b[d];xh.push(x);inv.push(iv);}return[xh,inv];}
+function lnBwdNotNeeded(){}
+function gelu(x){return 0.5*x*(1+Math.tanh(0.7978845608*(x+0.044715*x*x*x)));}
+function softmaxRow(r){const n=r.length;let mx=-1e30;for(let i=0;i<n;i++)if(r[i]>mx)mx=r[i];
+let s=0;const e=new Float32Array(n);for(let i=0;i<n;i++){e[i]=Math.exp(r[i]-mx);s+=e[i];}
+for(let i=0;i<n;i++)e[i]/=s;return e;}
+
+function mkEngine(W,cfg){
+  const {V,D,L,H,hs,T}=cfg; const P={};
+  for(const k in W){if(!W[k].b)continue;P[k]={a:f32(W[k].b),s:W[k].s};}
+  const vocab=W.__vocab, stoi={};vocab.forEach((c,i)=>stoi[c]=i);
+  function forward(ids){
+    const t=Math.min(ids.length,T),off=ids.length-t;
+    let x=[]; // (t,D)
+    for(let i=0;i<t;i++){const id=ids[off+i];const r=new Float32Array(D);
+      const we=P.we.a;const pe=P.wpe.a;
+      for(let d=0;d<D;d++)r[d]=we[id*D+d]+pe[i*D+d];x.push(r);}
+    for(let l=0;l<L;l++){
+      const p=k=>P[l+k].a;
+      let[h1]=ln(x,p('ln1g'),p('ln1b'));
+      const q=mm(h1,p('q'),D,D),k2=mm(h1,p('k'),D,D),v=mm(h1,p('v'),D,D);
+      const o=new Array(t);
+      for(let i=0;i<t;i++)o[i]=new Float32Array(D);
+      const sc=1/Math.sqrt(hs);
+      for(let h=0;h<H;h++){
+        const ho=h*hs;
+        for(let i=0;i<t;i++){const att=new Float32Array(t).fill(-1e10);
+          for(let j=0;j<=i;j++){let s=0;const qi=q[i],kj=k2[j];
+            for(let d=0;d<hs;d++)s+=qi[ho+d]*kj[ho+d];
+            att[j]=s*sc;}
+          const a=softmaxRow(att);
+          const oi=o[i];
+          for(let j=0;j<=i;j++){const w=a[j],vj=v[j];
+            for(let d=0;d<hs;d++)oi[ho+d]+=w*vj[ho+d];}}
+      }
+      const oo=mm(o,p('o'),D,D);
+      for(let i=0;i<t;i++){const xi=x[i],oi=oo[i];for(let d=0;d<D;d++)xi[d]+=oi[d];}
+      let[h2]=ln(x,p('ln2g'),p('ln2b'));
+      const pre=mm(h2,p('fc'),D,4*D),act=pre.map(r=>r.map(gelu));
+      const m2=mm(act,p('fc2'),4*D,D);
+      for(let i=0;i<t;i++){const xi=x[i],mi=m2[i];for(let d=0;d<D;d++)xi[d]+=mi[d];}
+    }
+    let[xf]=ln(x,P.lnfg.a,P.lnfb.a);
+    const logits=mmT(xf,P.we.a,t,D,V); // rows t, V
+    return logits;
+  }
+  function generate(prompt,n,temp,topk){
+    const ids=[];for(const ch of prompt)ids.push(stoi[ch]!==undefined?stoi[ch]:0);
+    let out='';
+    for(let s=0;s<n;s++){
+      const lg=forward(ids)[Math.min(ids.length,T)-1];
+      const arr=Array.from(lg);const mx=Math.max(...arr);
+      const pr=arr.map((v,i)=>[Math.exp((v-mx)/temp),i]).sort((a,b)=>b[0]-a[0]).slice(0,topk);
+      let sum=0;for(const p of pr)sum+=p[0];
+      let r=Math.random()*sum,ci=pr[pr.length-1][1];
+      for(const p of pr){r-=p[0];if(r<=0){ci=p[1];break;}}
+      ids.push(ci);out+=vocab[ci];
+      if(out.endsWith('\n\n'))break;
+    }
+    return out;
+  }
+  return {forward,generate};
+}
+
+const chat=document.getElementById('chat');let hist='',busy=false;
+function add(cls,txt){const d=document.createElement('div');d.className='m '+cls;d.textContent=txt;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;return d;}
+let model=null;
+Promise.all([fetch('w150_0.bin').then(r=>r.arrayBuffer()),fetch('w150_1.bin').then(r=>r.arrayBuffer())]).then(bs=>{
+  const u=new Uint8Array(bs[0].byteLength+bs[1].byteLength);
+  u.set(new Uint8Array(bs[0]),0);u.set(new Uint8Array(bs[1]),bs[0].byteLength);
+  const W={};
+  for(const k in MAN){if(k==='__vocab')continue;const m=MAN[k];
+    const i8=new Int8Array(u.buffer,u.byteOffset+m.o,m.n),a=new Float32Array(m.n);
+    for(let i=0;i<m.n;i++)a[i]=i8[i]*m.sc;
+    W[k]={a,s:m.s};}
+  W.__vocab=MAN.__vocab;
+  model=mkEngine(W,CFG);
+  document.getElementById('load').remove();
+  document.getElementById('q').disabled=false;
+  document.querySelector('#inp button').disabled=false;
+  add('n','привет! я нано-гпт на 151.8 млн параметров, обучена на 154к диалогов. спроси: как дела, кто ты, расскажи о себе...');
+}).catch(e=>add('n','не загрузилось: '+e));
+function send(){const inp=document.getElementById('q'),q=inp.value.trim();if(!q||!model||busy)return;
+add('u',q);inp.value='';busy=true;
+const think=add('n','');think.classList.add('caret');
+const sto={};MAN.__vocab.forEach((c,i)=>sto[c]=i);
+const ids=[];for(const ch of (hist+'В: '+q+'\nО:'))ids.push(sto[ch]!==undefined?sto[ch]:0);
+let out='';
+(function step(){
+  if(out.endsWith('\n\n')||out.length>=140||ids.length>=CFG.T){finish();return;}
+  const lg=model.forward(ids)[Math.min(ids.length,CFG.T)-1];
+  const arr=Array.from(lg),mx=Math.max(...arr);
+  const pr=arr.map((v,i)=>[Math.exp((v-mx)/0.6),i]).sort((a,b)=>b[0]-a[0]).slice(0,6);
+  let sum=0;for(const p of pr)sum+=p[0];
+  let r=Math.random()*sum,ci=pr[pr.length-1][1];
+  for(const p of pr){r-=p[0];if(r<=0){ci=p[1];break;}}
+  ids.push(ci);out+=MAN.__vocab[ci];
+  think.textContent=out.replace(/\n+$/,'');
+  chat.scrollTop=chat.scrollHeight;
+  setTimeout(step,0);
+})();
+function finish(){think.classList.remove('caret');
+  const ans=out.split('\n\n')[0].trim();
+  think.textContent=ans||'...';
+  hist+='В: '+q+'\nО: '+ans+'\n\n';
+  if(hist.length>800)hist=hist.slice(-600);
+  busy=false;}}
+document.getElementById('q').addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+</script></body></html>
